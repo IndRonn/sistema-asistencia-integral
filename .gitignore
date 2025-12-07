@@ -1,0 +1,19 @@
+# --- IDEs (Nunca subir esto) ---
+.idea/
+*.iml
+.vscode/
+
+# --- SEGURIDAD (Nunca subir esto) ---
+Wallet_*.zip
+cwallet.sso
+ewallet.p12
+keystore.jks
+*.properties
+!/backend-api/src/main/resources/application.properties
+# (La linea de arriba con ! permite subir el application.properties PERO CUIDADO con las claves dentro)
+
+# --- COMPILADOS y LOGS ---
+/target/
+/node_modules/
+/dist/
+*.log

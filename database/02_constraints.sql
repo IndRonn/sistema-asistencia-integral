@@ -1,0 +1,65 @@
+/* ARCHIVO: 02_constraints.sql
+   PROYECTO: Sistema de Control de Asistencias (Slytherin Edition)
+   DESCRIPCIÓN: Definición de Secuencias, Claves Foráneas (FK) e Índices de Rendimiento.
+   AUTOR: The Architect
+*/
+
+PROMPT === INICIANDO CREACION DE SECUENCIAS ===
+
+-- Secuencias para generación de llaves primarias
+-- START WITH 1 INCREMENT BY 1 es el estándar para contadores simples.
+CREATE SEQUENCE SEQ_USUARIO       START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SEQ_ASISTENCIA    START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SEQ_JUSTIFICACION START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SEQ_LOG_ASIS      START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SEQ_LOG_JUST      START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SEQ_LOG_SEG       START WITH 1 INCREMENT BY 1;
+
+PROMPT === ESTABLECIENDO INTEGRIDAD REFERENCIAL (FOREIGN KEYS) ===
+
+-- 1. RELACIONES DE ASISTENCIA
+-- Un registro de asistencia DEBE pertenecer a un usuario existente.
+ALTER TABLE ASISTENCIA ADD CONSTRAINT FK_ASISTENCIA_USUARIO
+    FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario);
+
+-- 2. RELACIONES DE JUSTIFICACION
+-- El empleado que solicita debe existir.
+ALTER TABLE JUSTIFICACION ADD CONSTRAINT FK_JUSTIFICACION_USUARIO
+    FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario);
+
+-- La justificación se enlaza a una asistencia específica (si aplica).
+ALTER TABLE JUSTIFICACION ADD CONSTRAINT FK_JUSTIFICACION_ASISTENCIA
+    FOREIGN KEY (id_asistencia) REFERENCES ASISTENCIA(id_asistencia);
+
+-- El aprobador (Admin) debe ser un usuario válido.
+ALTER TABLE JUSTIFICACION ADD CONSTRAINT FK_JUSTIFICACION_ADMIN
+    FOREIGN KEY (admin_aprobador) REFERENCES USUARIO(id_usuario);
+
+-- 3. RELACIONES DE AUDITORIA (LOGS)
+-- Aseguramos que los logs apunten a registros válidos.
+ALTER TABLE LOG_ASISTENCIA ADD CONSTRAINT FK_LOG_ASIS_ASISTENCIA
+    FOREIGN KEY (id_asistencia) REFERENCES ASISTENCIA(id_asistencia);
+
+ALTER TABLE LOG_JUSTIFICACION ADD CONSTRAINT FK_LOG_JUST_JUSTIFICACION
+    FOREIGN KEY (id_justificacion) REFERENCES JUSTIFICACION(id_justificacion);
+
+PROMPT === CREANDO INDICES DE RENDIMIENTO (CRITICAL PATH) ===
+
+-- A. OPTIMIZACIÓN DASHBOARD EMPLEADO (HU-003)
+-- El sistema consulta constantemente "¿Cuál es el estado de HOY para este USUARIO?".
+-- Este índice compuesto hace que esa respuesta sea instantánea (0.01s).
+CREATE INDEX IDX_ASISTENCIA_USR_FECHA ON ASISTENCIA(id_usuario, fecha);
+
+-- B. OPTIMIZACIÓN REPORTES (HU-009)
+-- Los administradores filtran masivamente por rangos de fechas.
+CREATE INDEX IDX_ASISTENCIA_FECHA ON ASISTENCIA(fecha);
+
+-- C. OPTIMIZACIÓN LOGIN (HU-001)
+-- Búsqueda rápida de credenciales por username.
+CREATE INDEX IDX_USUARIO_USERNAME ON USUARIO(username);
+
+-- D. OPTIMIZACIÓN GESTIÓN (HU-007)
+-- El admin necesita ver rápidamente todo lo que está 'PENDIENTE'.
+CREATE INDEX IDX_JUSTIFICACION_ESTADO ON JUSTIFICACION(estado);
+
+PROMPT === INTEGRIDAD Y OPTIMIZACION COMPLETADA ===
