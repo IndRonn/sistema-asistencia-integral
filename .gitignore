@@ -1,7 +1,12 @@
-# --- IDEs (Nunca subir esto) ---
+# --- IDEs  ---
 .idea/
+frontend-app/.vscode
 *.iml
-.vscode/
+*.suo
+*.ntvs
+*.njsproj
+*.sln
+*.sw?
 
 # --- SEGURIDAD (Nunca subir esto) ---
 Wallet_*.zip

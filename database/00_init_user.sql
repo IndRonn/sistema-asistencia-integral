@@ -7,7 +7,7 @@ PROMPT === CREANDO USUARIO DE APLICACION (SCHEMA OWNER) ===
 
 -- 1. Crear el usuario (Schema)
 -- Reemplaza "SlytherinSecurePassword123!" con una contraseña fuerte.
-CREATE USER CONTROL_ASISTENCIA IDENTIFIED BY "SlytherinSecurePassword123!";
+CREATE USER CONTROL_ASISTENCIA IDENTIFIED BY "ControlAsistencia123";
 
 -- 2. Asignar Quota (Espacio en disco)
 -- En Autonomous Database (ATP), esto es vital.
