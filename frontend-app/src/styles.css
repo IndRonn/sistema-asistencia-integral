@@ -1,1 +1,25 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* VARIABLES GLOBALES */
+:root {
+  --sys-black: #000000;
+  --sys-silver: #BCC6CC;
+}
+
+body {
+  background-color: var(--sys-black); /* Fondo negro por defecto */
+  color: var(--sys-silver);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Fix para Inputs en Chrome (Evita el fondo blanco feo) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #000000 inset !important;
+  -webkit-text-fill-color: #BCC6CC !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

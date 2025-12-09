@@ -45,20 +45,12 @@ ALTER TABLE LOG_JUSTIFICACION ADD CONSTRAINT FK_LOG_JUST_JUSTIFICACION
 
 PROMPT === CREANDO INDICES DE RENDIMIENTO (CRITICAL PATH) ===
 
--- A. OPTIMIZACIÓN DASHBOARD EMPLEADO (HU-003)
--- El sistema consulta constantemente "¿Cuál es el estado de HOY para este USUARIO?".
--- Este índice compuesto hace que esa respuesta sea instantánea (0.01s).
-CREATE INDEX IDX_ASISTENCIA_USR_FECHA ON ASISTENCIA(id_usuario, fecha);
 
--- B. OPTIMIZACIÓN REPORTES (HU-009)
+-- OPTIMIZACIÓN REPORTES (HU-009)
 -- Los administradores filtran masivamente por rangos de fechas.
 CREATE INDEX IDX_ASISTENCIA_FECHA ON ASISTENCIA(fecha);
 
--- C. OPTIMIZACIÓN LOGIN (HU-001)
--- Búsqueda rápida de credenciales por username.
-CREATE INDEX IDX_USUARIO_USERNAME ON USUARIO(username);
-
--- D. OPTIMIZACIÓN GESTIÓN (HU-007)
+-- OPTIMIZACIÓN GESTIÓN (HU-007)
 -- El admin necesita ver rápidamente todo lo que está 'PENDIENTE'.
 CREATE INDEX IDX_JUSTIFICACION_ESTADO ON JUSTIFICACION(estado);
 
