@@ -1,5 +1,6 @@
 package com.indra.asistencias.dto.login;
 
+import com.indra.asistencias.dto.usuario.UsuarioDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +12,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class JwtResponse {
     private String token;
-    private String tipo = "Bearer";
-    private String username;
-    private String rol;
+
+    @Builder.Default // Asegura que el builder use este valor por defecto
+    private String type = "Bearer";
+
+    private UsuarioDto usuario; // Objeto anidado
 }
