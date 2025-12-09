@@ -35,7 +35,7 @@ INSERT INTO USUARIO (
 ) VALUES (
     SEQ_USUARIO.NEXTVAL,
     'admin',
-    '$2a$10$rTp/y3.XwVq.XwVq.XwVqeW1.W1.W1.W1.W1.W1.W1.W1.W1.', -- Hash Dummy
+    '$2a$10$7Y9aYcgtKXHJfpM63XfeieEGjW8s6Sus9tYvzi839jT/gz0002.rW', -- Hash Dummy
     'admin@sistema.com',
     'System',
     'Administrator',
