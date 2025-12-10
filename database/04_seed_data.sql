@@ -67,4 +67,14 @@ INSERT INTO USUARIO (
 -- Confirmar transacciones para persistencia inmediata
 COMMIT;
 
+-- 1. Hora de entrada oficial (08:00 AM)
+INSERT INTO CONFIGURACION (clave, valor, descripcion)
+VALUES ('HORA_ENTRADA', '08:00', 'Hora oficial de inicio de jornada (HH:mm)');
+
+-- 2. Tolerancia (15 minutos)
+INSERT INTO CONFIGURACION (clave, valor, descripcion)
+VALUES ('TOLERANCIA_MINUTOS', '15', 'Minutos de gracia antes de considerar Tardanza');
+
+COMMIT;
+
 PROMPT === SEMILLA PLANTADA. SISTEMA LISTO PARA OPERAR ===

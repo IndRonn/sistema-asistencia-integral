@@ -1,6 +1,6 @@
 package com.indra.asistencias.repositories.impl;
 
-import com.indra.asistencias.dto.asistencia.DashboardDto;
+import com.indra.asistencias.dto.asistencia.EstadoAsistenciaDto;
 import com.indra.asistencias.repositories.AsistenciaRepositoryCustom;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -22,52 +22,83 @@ public class AsistenciaRepositoryImpl implements AsistenciaRepositoryCustom {
 
     private final JdbcTemplate jdbcTemplate;
     private SimpleJdbcCall procObtenerEstado;
+    private SimpleJdbcCall procRegistrar;
 
     @PostConstruct
     public void init() {
+        // 1. Configuración de Lectura (OBTENER ESTADO)
         this.procObtenerEstado = new SimpleJdbcCall(jdbcTemplate)
                 .withCatalogName("PKG_ASISTENCIA")
                 .withProcedureName("SP_OBTENER_ESTADO_ACTUAL")
                 .returningResultSet("p_cursor", (rs, rowNum) -> {
 
-                    // 1. Extracción de Oracle
-                    String estadoJornadaOracle = rs.getString("estado_actual_jornada"); // EN_CURSO, FINALIZADO
+                    // --- A. Extracción de Datos de Oracle ---
+                    String estadoJornadaOracle = rs.getString("estado_actual_jornada"); // 'EN_CURSO' | 'FINALIZADO'
+                    String estadoAsistencia = rs.getString("estado_asistencia");        // 'P', 'T', etc.
                     Timestamp tsEntrada = rs.getTimestamp("hora_entrada");
                     Timestamp tsSalida = rs.getTimestamp("hora_salida");
-                    String estadoAsistencia = rs.getString("estado_asistencia"); // 'T', 'P', etc.
 
-                    // 2. Formateo de Hora (ISO-8601 HH:mm:ss según contrato)
+                    // --- B. Formateo de Horas (HH:mm:ss) ---
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-
                     String horaEntradaStr = (tsEntrada != null) ? tsEntrada.toLocalDateTime().format(formatter) : null;
                     String horaSalidaStr = (tsSalida != null) ? tsSalida.toLocalDateTime().format(formatter) : null;
 
-                    // 3. Traducción de Estado (Oracle -> Contrato API)
+                    // --- C. Lógica de Negocio ---
+                    // Traducción de estado
                     String estadoApi = "EN_CURSO".equals(estadoJornadaOracle) ? "EN_JORNADA" : "FINALIZADO";
 
-                    // 4. Mensaje Dinámico
+                    // Mensaje amigable
                     String mensaje = "EN_JORNADA".equals(estadoApi)
                             ? "Jornada en curso"
                             : "Jornada finalizada";
 
-                    // 5. Detectar Tardanza
+                    // Cálculo seguro de Tardanza (Evita NullPointer)
+                    // Si la columna es NULL, "T".equals(null) devuelve false. Es seguro.
                     boolean esTardanza = "T".equals(estadoAsistencia);
 
-                    return DashboardDto.builder()
+                    // --- D. Construcción del DTO ---
+                    return EstadoAsistenciaDto.builder()
                             .estado(estadoApi)
                             .mensaje(mensaje)
                             .horaEntrada(horaEntradaStr)
                             .horaSalida(horaSalidaStr)
-                            .esTardanza(esTardanza)
+                            .esTardanza(esTardanza) // Asignación crítica
                             .build();
                 });
+
+        // 2. Configuración de Escritura (REGISTRAR MARCA)
+        this.procRegistrar = new SimpleJdbcCall(jdbcTemplate)
+                .withCatalogName("PKG_ASISTENCIA")
+                .withProcedureName("SP_REGISTRAR_ASISTENCIA");
     }
 
     @Override
-    public Optional<DashboardDto> obtenerEstadoActual(Long idUsuario) {
+    public String registrarAsistencia(Long idUsuario, String ip, String device) {
+        try {
+            // Mapeo automático de parámetros IN
+            Map<String, Object> inParams = Map.of(
+                    "p_usuario_id", idUsuario,
+                    "p_ip_origen", ip != null ? ip : "UNKNOWN",
+                    "p_device", device != null ? device : "UNKNOWN"
+            );
+
+            // Ejecución del SP
+            Map<String, Object> out = procRegistrar.execute(inParams);
+
+            // Retorno del mensaje de salida (OUT)
+            return (String) out.get("p_mensaje");
+
+        } catch (Exception e) {
+            log.error("Error crítico en SP_REGISTRAR_ASISTENCIA: {}", e.getMessage());
+            throw e; // Relanzamos para que Spring maneje la excepción (GlobalExceptionHandler)
+        }
+    }
+
+    @Override
+    public Optional<EstadoAsistenciaDto> obtenerEstadoActual(Long idUsuario) {
         try {
             Map<String, Object> results = procObtenerEstado.execute(Map.of("p_usuario_id", idUsuario));
-            List<DashboardDto> list = (List<DashboardDto>) results.get("p_cursor");
+            List<EstadoAsistenciaDto> list = (List<EstadoAsistenciaDto>) results.get("p_cursor");
 
             if (list != null && !list.isEmpty()) {
                 return Optional.of(list.get(0));
