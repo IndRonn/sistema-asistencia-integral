@@ -38,3 +38,27 @@ export interface HistoryResponse {
   totalElements: number;
   totalPages: number;
 }
+
+export interface AttendanceRecord {
+  idAsistencia: number;
+  idUsuario: number;
+  nombreCompleto: string;
+  email: string;
+  fecha: string;            // "2025-12-10"
+  horaEntrada: string;      // "04:56:31"
+  horaSalida: string | null;
+  estado: string;           // "P"
+  estadoTexto: string;      // "PUNTUAL"
+  esTardanza: boolean;
+  esJustificable: boolean;  // ✅ Ahora viene directo del back
+}
+
+export interface HistoryResponse {
+  content: AttendanceRecord[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+}

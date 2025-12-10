@@ -1,1 +1,89 @@
-<p>history works!</p>
+<div class="p-6 text-sys-silver animate-fade-in min-h-screen bg-sys-black">
+
+  <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-6 border-b border-sys-dim pb-6">
+    <div>
+      <h1 class="text-3xl font-serif text-white">Historial</h1>
+      <p class="text-xs text-gray-500 uppercase tracking-[0.2em] mt-1">
+        Total Registros: <span class="text-sys-primary font-bold">{{ totalElements() }}</span>
+      </p>
+    </div>
+
+    <div class="flex gap-2 items-center bg-sys-surface p-1 border border-sys-dim">
+      <input type="date" [ngModel]="fechaInicio()" (ngModelChange)="fechaInicio.set($event)"
+             class="bg-transparent border-none text-xs focus:ring-0 text-white p-2 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert">
+      <span class="text-gray-600">-</span>
+      <input type="date" [ngModel]="fechaFin()" (ngModelChange)="fechaFin.set($event)"
+             class="bg-transparent border-none text-xs focus:ring-0 text-white p-2 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert">
+
+      <button (click)="loadHistory(0)"
+              class="ml-2 bg-sys-primary hover:bg-green-900 text-white px-4 py-2 text-xs uppercase font-bold transition-colors">
+        FILTRAR
+      </button>
+    </div>
+  </div>
+
+  <div class="overflow-hidden border border-sys-dim bg-sys-surface shadow-2xl relative">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-black/50 text-xs uppercase font-bold tracking-wider text-gray-500 border-b border-sys-dim">
+      <tr>
+        <th class="px-6 py-4">Fecha</th>
+        <th class="px-6 py-4">Entrada</th>
+        <th class="px-6 py-4">Salida</th>
+        <th class="px-6 py-4">Estado</th>
+        <th class="px-6 py-4 text-right">Acción</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-sys-dim/20">
+
+      <tr *ngIf="isLoading()">
+        <td colspan="5" class="px-6 py-12 text-center text-gray-500 animate-pulse">
+          Sincronizando registros...
+        </td>
+      </tr>
+
+      <tr *ngIf="!isLoading() && records().length === 0">
+        <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">
+          No hay registros para mostrar.
+        </td>
+      </tr>
+
+      <tr *ngFor="let row of records()" class="group hover:bg-white/5 transition-colors">
+        <td class="px-6 py-4 font-mono text-white border-l-2 border-transparent group-hover:border-sys-primary transition-all">
+          {{ row.fecha }}
+        </td>
+        <td class="px-6 py-4 text-gray-300">{{ row.horaEntrada || '--:--' }}</td>
+        <td class="px-6 py-4 text-gray-300">{{ row.horaSalida || '--:--' }}</td>
+        <td class="px-6 py-4">
+          <app-ui-badge [variant]="getVariant(row.estadoTexto)">
+            {{ row.estadoTexto }}
+          </app-ui-badge>
+        </td>
+        <td class="px-6 py-4 text-right">
+          <button *ngIf="row.esJustificable"
+                  class="text-xs text-sys-silver hover:text-white underline decoration-sys-dim hover:decoration-white transition-all">
+            Solicitar Justificación
+          </button>
+          <span *ngIf="!row.esJustificable" class="text-sys-dim text-xs select-none opacity-50">•</span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="!isLoading() && totalElements() > 0" class="bg-black/30 px-6 py-3 border-t border-sys-dim flex justify-between items-center text-xs text-gray-500 uppercase tracking-widest">
+
+      <span>Página {{ currentPage() + 1 }} de {{ totalPages() }}</span>
+
+      <div class="flex gap-2">
+        <button (click)="prevPage()" [disabled]="isFirstPage()"
+                class="px-3 py-1 border border-sys-dim hover:bg-sys-dim hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+          Anterior
+        </button>
+        <button (click)="nextPage()" [disabled]="isLastPage()"
+                class="px-3 py-1 border border-sys-dim hover:bg-sys-dim hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+          Siguiente
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

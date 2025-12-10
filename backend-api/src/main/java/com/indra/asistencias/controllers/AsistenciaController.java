@@ -8,10 +8,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import com.indra.asistencias.models.AsistenciaView;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/asistencia") // CAMBIO: Singular (según contrato)
@@ -39,5 +42,23 @@ public class AsistenciaController {
         MarcaRespuestaDto respuesta = asistenciaService.registrarMarcacion(auth.getName(), ip, device);
 
         return ResponseEntity.status(201).body(respuesta); // 201 Created
+    }
+
+    @GetMapping("/historial")
+    public ResponseEntity<Page<AsistenciaView>> listarHistorial(
+            @RequestParam(required = false) LocalDate fechaInicio,
+            @RequestParam(required = false) LocalDate fechaFin,
+            @PageableDefault(size = 10, sort = "fecha") Pageable pageable
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        Page<AsistenciaView> historial = asistenciaService.obtenerHistorial(
+                auth.getName(),
+                fechaInicio,
+                fechaFin,
+                pageable
+        );
+
+        return ResponseEntity.ok(historial);
     }
 }

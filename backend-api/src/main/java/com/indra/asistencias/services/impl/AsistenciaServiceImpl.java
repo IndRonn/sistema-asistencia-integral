@@ -2,16 +2,21 @@ package com.indra.asistencias.services.impl;
 
 import com.indra.asistencias.dto.asistencia.EstadoAsistenciaDto; // <--- Usamos el nombre correcto
 import com.indra.asistencias.dto.asistencia.MarcaRespuestaDto;
+import com.indra.asistencias.models.AsistenciaView;
 import com.indra.asistencias.models.Usuario;
 import com.indra.asistencias.repositories.AsistenciaRepository;
+import com.indra.asistencias.repositories.AsistenciaViewRepository;
 import com.indra.asistencias.repositories.UsuarioRepository;
 import com.indra.asistencias.services.IAsistenciaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 @Service
@@ -21,6 +26,7 @@ public class AsistenciaServiceImpl implements IAsistenciaService {
 
     private final AsistenciaRepository asistenciaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AsistenciaViewRepository asistenciaViewRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -78,5 +84,27 @@ public class AsistenciaServiceImpl implements IAsistenciaService {
                 .horaExacta(esEntrada ? estado.getHoraEntrada() : estado.getHoraSalida())
                 .estadoAsistencia(estadoLetra)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AsistenciaView> obtenerHistorial(String username, LocalDate desde, LocalDate hasta, Pageable pageable) {
+
+        // 1. Obtener Usuario
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        // 2. Definir Rango de Fechas por Defecto (Si vienen nulas)
+        // Regla: Si no filtra, mostramos el mes actual.
+        LocalDate inicio = (desde != null) ? desde : LocalDate.now().withDayOfMonth(1);
+        LocalDate fin = (hasta != null) ? hasta : LocalDate.now();
+
+        // 3. Consultar Vista
+        return asistenciaViewRepository.findByIdUsuarioAndFechaBetweenOrderByFechaDesc(
+                usuario.getIdUsuario(),
+                inicio,
+                fin,
+                pageable
+        );
     }
 }
