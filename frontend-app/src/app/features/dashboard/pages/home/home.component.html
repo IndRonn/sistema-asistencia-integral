@@ -7,7 +7,7 @@
 
   <div class="relative w-full max-w-xs aspect-square flex flex-col items-center justify-center group cursor-default">
 
-    <div *ngIf="isLoading()" class="absolute inset-0 rounded-full border border-sys-dim animate-pulse"></div>
+    <div *ngIf="isLoading() || isProcessingMarca()" class="absolute inset-0 rounded-full border border-sys-dim animate-pulse"></div>
 
     <div *ngIf="!isLoading()"
          class="absolute inset-0 rounded-full border-2 transition-all duration-700 ease-out shadow-[0_0_30px_rgba(0,0,0,0.5)]"
@@ -17,7 +17,7 @@
     <div class="z-10 text-center space-y-3 transform transition-transform duration-500">
 
       <div class="text-6xl font-mono font-bold tracking-tighter text-white drop-shadow-lg">
-        {{ statusData()?.horaEntrada || '--:--' }}
+        {{ statusData()?.estado === 'EN_JORNADA' ? liveTime() : (statusData()?.horaEntrada || '--:--') }}
       </div>
 
       <div class="text-sm uppercase tracking-[0.2em] font-bold transition-colors duration-300"
@@ -36,13 +36,39 @@
     </div>
   </div>
 
-  <div class="mt-16 w-full max-w-md">
+  <div *ngIf="statusData()" class="mt-10 flex gap-8 text-xs uppercase tracking-[0.2em] text-gray-500 font-medium animate-fade-in">
+
+    <div class="flex items-center gap-2 group hover:text-sys-silver transition-colors">
+      <span class="text-sys-primary text-lg">⏱</span>
+      <span>
+        Entrada:
+        <span class="text-white font-bold text-sm ml-1 border-b border-sys-dim pb-0.5">
+          {{ statusData()?.horaInicioConfig }}
+        </span>
+      </span>
+    </div>
+
+    <div class="flex items-center gap-2 group hover:text-sys-silver transition-colors">
+      <span class="text-sys-warning text-lg">⚠️</span>
+      <span>
+        Tol:
+        <span class="text-white font-bold text-sm ml-1 border-b border-sys-dim pb-0.5">
+          {{ statusData()?.toleranciaMinutos }} min
+        </span>
+      </span>
+    </div>
+
+  </div>
+
+  <div class="mt-8 w-full max-w-md">
     <button
-      [disabled]="isLoading() || statusData()?.estado === 'FINALIZADO'"
+      (click)="onMarcar()"
+      [disabled]="isLoading() || isProcessingMarca() || statusData()?.estado === 'FINALIZADO'"
       class="w-full py-5 border border-sys-dim bg-transparent hover:bg-sys-dim/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all uppercase tracking-widest text-xs font-bold flex items-center justify-center group relative overflow-hidden"
+      [ngClass]="{'hover:border-sys-alert': statusData()?.estado === 'EN_JORNADA'}"
     >
       <span class="relative z-10 group-hover:text-white transition-colors duration-300">
-        {{ uiState().actionLabel }}
+        {{ isProcessingMarca() ? 'PROCESANDO...' : uiState().actionLabel }}
       </span>
 
       <div class="absolute inset-0 bg-sys-silver/5 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>

@@ -1,15 +1,40 @@
 export interface DashboardStatus {
   estado: 'SIN_MARCAR' | 'EN_JORNADA' | 'FINALIZADO';
   mensaje: string;
-  horaEntrada: string | null; // "HH:mm:ss"
+  horaEntrada: string | null;
   horaSalida: string | null;
   esTardanza: boolean;
+  // ✅ NUEVOS CAMPOS (Información de Reglas)
+  horaInicioConfig: string;     // "08:00"
+  toleranciaMinutos: string;    // "15"
 }
 
-// Tipado para la UI (Colores y Etiquetas)
 export interface UIStateConfig {
   color: string;
   borderColor: string;
   label: string;
-  actionLabel: string; // "INICIAR JORNADA" vs "TERMINAR JORNADA"
+  actionLabel: string;
+}
+
+export interface CheckInResponse {
+  mensaje: string;
+  tipoMarca: 'ENTRADA' | 'SALIDA';
+  horaExacta: string;
+  estadoAsistencia: string;
+}
+
+// Para el Historial (Hito 2.3)
+export interface AttendanceRecord {
+  id: number;
+  fecha: string;
+  horaEntrada: string;
+  horaSalida: string | null;
+  estado: string;
+  esJustificable: boolean;
+}
+
+export interface HistoryResponse {
+  content: AttendanceRecord[];
+  totalElements: number;
+  totalPages: number;
 }

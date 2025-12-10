@@ -12,6 +12,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -27,13 +29,23 @@ public class AsistenciaServiceImpl implements IAsistenciaService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
         return asistenciaRepository.obtenerEstadoActual(usuario.getIdUsuario())
-                .orElseGet(() -> EstadoAsistenciaDto.builder()
-                        .estado("SIN_MARCAR")
-                        .mensaje("Listo para iniciar")
-                        .horaEntrada(null)
-                        .horaSalida(null)
-                        .esTardanza(false) // Valor por defecto seguro
-                        .build());
+                .orElseGet(() -> {
+                    // 1. Obtener configuración fresca desde la BD
+                    Map<String, String> config = asistenciaRepository.obtenerConfiguracionAsistencia();
+
+                    // 2. Construir DTO con datos reales
+                    return EstadoAsistenciaDto.builder()
+                            .estado("SIN_MARCAR")
+                            .mensaje("Listo para iniciar jornada.")
+                            .horaEntrada(null)
+                            .horaSalida(null)
+                            .esTardanza(false)
+
+                            // SIN HARDCODE: Usamos lo que diga Oracle
+                            .horaInicioConfig(config.getOrDefault("HORA_ENTRADA", "08:00"))
+                            .toleranciaMinutos(config.getOrDefault("TOLERANCIA_MINUTOS", "15"))
+                            .build();
+                });
     }
 
     @Override

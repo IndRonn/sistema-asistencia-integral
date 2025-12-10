@@ -1,1 +1,27 @@
-<p>ui-toast works!</p>
+<div class="fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
+
+  <div *ngFor="let toast of toastService.toasts()"
+       class="pointer-events-auto min-w-[320px] max-w-sm p-4 rounded-r-md border-l-4 shadow-2xl backdrop-blur-md bg-sys-surface/95 text-sys-silver animate-fade-in transform transition-all hover:scale-102 flex items-start"
+       [ngClass]="{
+         'border-sys-primary': toast.type === 'success',
+         'border-sys-alert': toast.type === 'error',
+         'border-blue-500': toast.type === 'info'
+       }">
+
+    <div class="mr-3 text-xl shrink-0">
+      <span *ngIf="toast.type === 'success'">✅</span>
+      <span *ngIf="toast.type === 'error'">🚫</span>
+      <span *ngIf="toast.type === 'info'">ℹ️</span>
+    </div>
+
+    <div class="flex-1 text-sm font-medium leading-relaxed pt-0.5">
+      {{ toast.text }}
+    </div>
+
+    <button (click)="toastService.remove(toast.id)"
+            class="ml-3 text-gray-500 hover:text-white transition-colors focus:outline-none">
+      ✕
+    </button>
+  </div>
+
+</div>

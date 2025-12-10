@@ -97,16 +97,53 @@ public class AsistenciaRepositoryImpl implements AsistenciaRepositoryCustom {
     @Override
     public Optional<EstadoAsistenciaDto> obtenerEstadoActual(Long idUsuario) {
         try {
+            // 1. Ejecutar el SP Principal
             Map<String, Object> results = procObtenerEstado.execute(Map.of("p_usuario_id", idUsuario));
             List<EstadoAsistenciaDto> list = (List<EstadoAsistenciaDto>) results.get("p_cursor");
 
             if (list != null && !list.isEmpty()) {
-                return Optional.of(list.get(0));
+                EstadoAsistenciaDto dto = list.get(0);
+
+                // 2. ENRIQUECIMIENTO TÁCTICO: Leer Configuración
+                // (Hacemos esto aquí para no modificar el SP complejo por ahora)
+                injectarConfiguracion(dto);
+
+                return Optional.of(dto);
             }
             return Optional.empty();
         } catch (Exception e) {
             log.error("Error llamando a SP_OBTENER_ESTADO_ACTUAL: {}", e.getMessage());
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Map<String, String> obtenerConfiguracionAsistencia() {
+        try {
+            // Consultamos la tabla CONFIGURACION
+            String sql = "SELECT clave, valor FROM CONFIGURACION WHERE clave IN ('HORA_ENTRADA', 'TOLERANCIA_MINUTOS')";
+
+            // Usamos un extractor para convertir ResultSet a Map
+            return jdbcTemplate.query(sql, (rs) -> {
+                Map<String, String> config = new java.util.HashMap<>();
+                while (rs.next()) {
+                    config.put(rs.getString("clave"), rs.getString("valor"));
+                }
+                return config;
+            });
+        } catch (Exception ex) {
+            log.error("Error leyendo configuración: {}", ex.getMessage());
+            // Solo aquí usamos hardcode como ÚLTIMO recurso si la BD explota
+            return Map.of("HORA_ENTRADA", "08:00", "TOLERANCIA_MINUTOS", "15");
+        }
+    }
+
+    // Modificamos este método privado para que use el método público de arriba
+    private void injectarConfiguracion(EstadoAsistenciaDto dto) {
+        Map<String, String> config = obtenerConfiguracionAsistencia();
+
+        // Asignación segura con valores por defecto si el mapa viniera vacío
+        dto.setHoraInicioConfig(config.getOrDefault("HORA_ENTRADA", "08:00"));
+        dto.setToleranciaMinutos(config.getOrDefault("TOLERANCIA_MINUTOS", "15"));
     }
 }

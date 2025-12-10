@@ -13,10 +13,11 @@ import java.io.Serializable;
 public class EstadoAsistenciaDto implements Serializable {
     private String estado;
     private String mensaje;
-    private String horaEntrada;
+    private String horaEntrada; // La hora real de la marca
     private String horaSalida;
-
-    // ⚠️ CAMBIO CRÍTICO: De 'Boolean' a 'boolean'
-    // Al ser primitivo, si no se le asigna valor, por defecto será 'false'. NUNCA 'null'.
     private boolean esTardanza;
+
+    // --- NUEVOS CAMPOS ---
+    private String horaInicioConfig; // Ej: "08:00"
+    private String toleranciaMinutos; // Ej: "15"
 }

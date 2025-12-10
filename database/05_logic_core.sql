@@ -80,27 +80,33 @@ END PKG_ASISTENCIA;
 -- B. CUERPO (BODY) - LA LÓGICA DURA
 CREATE OR REPLACE PACKAGE BODY PKG_ASISTENCIA AS
 
+    -- HU-003: Obtener estado
     PROCEDURE SP_OBTENER_ESTADO_ACTUAL(
         p_usuario_id IN NUMBER,
         p_cursor OUT SYS_REFCURSOR
     ) IS
+        -- Variable para saber "qué día es hoy" en Perú
+        v_hoy DATE;
     BEGIN
-        -- Retornamos la última asistencia DE HOY
+        -- Calculamos la fecha en Lima, ignorando la hora del servidor en EEUU
+        v_hoy := TRUNC(SYSTIMESTAMP AT TIME ZONE 'America/Lima');
+
         OPEN p_cursor FOR
-        SELECT
-            id_asistencia,
-            hora_entrada,
-            hora_salida,
-            estado_asistencia,
-            CASE
-                WHEN hora_salida IS NOT NULL THEN 'FINALIZADO'
-                ELSE 'EN_CURSO'
-            END AS estado_actual_jornada
-        FROM ASISTENCIA
-        WHERE id_usuario = p_usuario_id
-          AND fecha = TRUNC(SYSDATE);
+            SELECT
+                id_asistencia,
+                hora_entrada,
+                hora_salida,
+                estado_asistencia,
+                CASE
+                    WHEN hora_salida IS NOT NULL THEN 'FINALIZADO'
+                    ELSE 'EN_CURSO'
+                    END AS estado_actual_jornada
+            FROM ASISTENCIA
+            WHERE id_usuario = p_usuario_id
+              AND fecha = v_hoy; -- Usamos la fecha corregida
     END SP_OBTENER_ESTADO_ACTUAL;
 
+    -- HU-004: Registrar Asistencia
     PROCEDURE SP_REGISTRAR_ASISTENCIA(
         p_usuario_id IN NUMBER,
         p_ip_origen  IN VARCHAR2,
@@ -110,80 +116,90 @@ CREATE OR REPLACE PACKAGE BODY PKG_ASISTENCIA AS
         v_existe NUMBER;
         v_hora_entrada_config VARCHAR2(5);
         v_tolerancia_min NUMBER;
-        v_hora_limite DATE;
+        v_hora_limite TIMESTAMP; -- Cambiado a TIMESTAMP para precisión
         v_estado_calculado CHAR(1);
         v_asistencia_row ASISTENCIA%ROWTYPE;
+
+        -- EL RELOJ MAESTRO: La hora exacta en Perú AHORA MISMO
+        v_ahora TIMESTAMP;
+        v_hoy DATE;
     BEGIN
-        -- 1. Validar Usuario Activo
+        -- 1. Sincronizar Relojes (Magia de Timezone)
+        v_ahora := SYSTIMESTAMP AT TIME ZONE 'America/Lima';
+        v_hoy   := TRUNC(v_ahora);
+
+        -- 2. Validar Usuario Activo
         SELECT COUNT(*) INTO v_existe FROM USUARIO WHERE id_usuario = p_usuario_id AND estado = 'A';
         IF v_existe = 0 THEN
             RAISE_APPLICATION_ERROR(-20002, 'Usuario inactivo o no existe.');
         END IF;
 
-        -- 2. Buscar registro de HOY
+        -- 3. Buscar registro de HOY (Hora Perú)
         BEGIN
             SELECT * INTO v_asistencia_row
             FROM ASISTENCIA
-            WHERE id_usuario = p_usuario_id AND fecha = TRUNC(SYSDATE);
+            WHERE id_usuario = p_usuario_id AND fecha = v_hoy;
 
-            v_existe := 1; -- Ya hay registro
+            v_existe := 1;
         EXCEPTION
             WHEN NO_DATA_FOUND THEN
-                v_existe := 0; -- Es el primer registro (ENTRADA)
+                v_existe := 0;
         END;
 
-        -- 3. Lógica de Decisión (ENTRADA vs SALIDA)
+        -- 4. Lógica de Decisión
         IF v_existe = 0 THEN
-            -- === ES UNA ENTRADA (CHECK-IN) ===
+            -- === ENTRADA ===
 
-            -- Obtener Configuración
-            SELECT valor INTO v_hora_entrada_config FROM CONFIGURACION WHERE clave = 'HORA_ENTRADA';
-            SELECT TO_NUMBER(valor) INTO v_tolerancia_min FROM CONFIGURACION WHERE clave = 'TOLERANCIA_MINUTOS';
+            -- Obtener Configuración (Con fallback si falta datos)
+            BEGIN
+                SELECT valor INTO v_hora_entrada_config FROM CONFIGURACION WHERE clave = 'HORA_ENTRADA';
+                SELECT TO_NUMBER(valor) INTO v_tolerancia_min FROM CONFIGURACION WHERE clave = 'TOLERANCIA_MINUTOS';
+            EXCEPTION WHEN NO_DATA_FOUND THEN
+                v_hora_entrada_config := '08:00';
+                v_tolerancia_min := 15;
+            END;
 
-            -- Calcular Límite (Fecha de hoy + Hora config + Tolerancia)
-            -- Nota: Concatenamos la fecha de hoy con la hora string '08:00'
-            v_hora_limite := TO_DATE(TO_CHAR(SYSDATE, 'DD/MM/YYYY') || ' ' || v_hora_entrada_config, 'DD/MM/YYYY HH24:MI');
-            v_hora_limite := v_hora_limite + (v_tolerancia_min / 1440); -- Sumar minutos
+            -- Calcular Límite usando la fecha corregida
+            -- Construimos el timestamp límite combinando el día de hoy (Perú) con la hora config
+            v_hora_limite := TO_TIMESTAMP(TO_CHAR(v_hoy, 'DD/MM/YYYY') || ' ' || v_hora_entrada_config, 'DD/MM/YYYY HH24:MI');
+            v_hora_limite := v_hora_limite + NUMTODSINTERVAL(v_tolerancia_min, 'MINUTE');
 
-            -- Determinar Puntualidad
-            IF SYSDATE > v_hora_limite THEN
-                v_estado_calculado := 'T'; -- Tarde
+            -- Comparar AHORA vs LÍMITE
+            IF v_ahora > v_hora_limite THEN
+                v_estado_calculado := 'T';
                 p_mensaje := 'Entrada registrada con TARDANZA.';
             ELSE
-                v_estado_calculado := 'P'; -- Puntual
+                v_estado_calculado := 'P';
                 p_mensaje := 'Entrada registrada PUNTUALMENTE.';
             END IF;
 
-            -- INSERTAR
+            -- INSERTAR (Usando v_ahora y v_hoy corregidos)
             INSERT INTO ASISTENCIA (
                 id_asistencia, id_usuario, fecha, hora_entrada, estado_asistencia, ip_origen, device_info
             ) VALUES (
-                SEQ_ASISTENCIA.NEXTVAL, p_usuario_id, TRUNC(SYSDATE), SYSDATE, v_estado_calculado, p_ip_origen, p_device
-            );
+                         SEQ_ASISTENCIA.NEXTVAL, p_usuario_id, v_hoy, v_ahora, v_estado_calculado, p_ip_origen, p_device
+                     );
 
         ELSE
-            -- === ES UNA SALIDA (CHECK-OUT) ===
-
+            -- === SALIDA ===
             IF v_asistencia_row.hora_salida IS NOT NULL THEN
-                -- Violación de Negocio: Ya cerró el día.
                 RAISE_APPLICATION_ERROR(-20001, 'Ya marcó su salida el día de hoy.');
             END IF;
 
-            -- ACTUALIZAR
+            -- ACTUALIZAR (Usando v_ahora corregido)
             UPDATE ASISTENCIA
-            SET hora_salida = SYSDATE
+            SET hora_salida = v_ahora
             WHERE id_asistencia = v_asistencia_row.id_asistencia;
 
             p_mensaje := 'Salida registrada correctamente. Jornada finalizada.';
-
         END IF;
 
-        COMMIT; -- Confirmamos la transacción atómica
+        COMMIT;
 
     EXCEPTION
         WHEN OTHERS THEN
             ROLLBACK;
-            RAISE; -- Re-lanzar el error para que Java lo capture (especialmente el -20001)
+            RAISE;
     END SP_REGISTRAR_ASISTENCIA;
 
 END PKG_ASISTENCIA;
