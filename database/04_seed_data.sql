@@ -55,8 +55,8 @@ INSERT INTO USUARIO (
     estado
 ) VALUES (
     SEQ_USUARIO.NEXTVAL,
-    'empleado',
-    '$2a$10$rTp/y3.XwVq.XwVq.XwVqeW1.W1.W1.W1.W1.W1.W1.W1.W1.', -- Hash Dummy
+    'empleado1',
+    '$2a$10$BJ6psi9ASgfyQYjl7cOCZ.rcL.q16g1ZBpZvpeGJzPEFZu9rJyV6O', -- Hash Dummy
     'empleado@sistema.com',
     'Juan',
     'Perez',
