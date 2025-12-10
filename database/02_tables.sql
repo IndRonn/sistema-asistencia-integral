@@ -38,7 +38,7 @@ CREATE TABLE ASISTENCIA (
     hora_salida       TIMESTAMP,              -- NULL mientras la jornada está abierta
     estado_asistencia CHAR(1)       NOT NULL,
     ip_origen         VARCHAR2(50),           -- Auditoría de ubicación
-    device_info       VARCHAR2(100),          -- Auditoría de dispositivo
+    device_info       VARCHAR2(255),          -- Auditoría de dispositivo
 
     CONSTRAINT PK_ASISTENCIA PRIMARY KEY (id_asistencia),
 

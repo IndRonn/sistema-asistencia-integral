@@ -4,7 +4,7 @@ import com.indra.asistencias.dto.login.JwtResponse;
 import com.indra.asistencias.dto.login.LoginRequest;
 import com.indra.asistencias.mappers.UsuarioMapper;
 import com.indra.asistencias.models.Usuario;
-import com.indra.asistencias.repositories.IUsuarioRepository;
+import com.indra.asistencias.repositories.UsuarioRepository;
 import com.indra.asistencias.security.JwtUtils;
 import com.indra.asistencias.services.IAuthService; // <--- Import correjido
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class AuthServiceImpl implements IAuthService { // <--- Implementación d
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
-    private final IUsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
 
     @Override

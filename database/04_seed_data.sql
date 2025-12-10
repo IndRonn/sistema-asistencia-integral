@@ -55,8 +55,8 @@ INSERT INTO USUARIO (
     estado
 ) VALUES (
     SEQ_USUARIO.NEXTVAL,
-    'empleado',
-    '$2a$10$rTp/y3.XwVq.XwVq.XwVqeW1.W1.W1.W1.W1.W1.W1.W1.W1.', -- Hash Dummy
+    'empleado1',
+    '$2a$10$BJ6psi9ASgfyQYjl7cOCZ.rcL.q16g1ZBpZvpeGJzPEFZu9rJyV6O', -- Hash Dummy
     'empleado@sistema.com',
     'Juan',
     'Perez',
@@ -65,6 +65,16 @@ INSERT INTO USUARIO (
 );
 
 -- Confirmar transacciones para persistencia inmediata
+COMMIT;
+
+-- 1. Hora de entrada oficial (08:00 AM)
+INSERT INTO CONFIGURACION (clave, valor, descripcion)
+VALUES ('HORA_ENTRADA', '08:00', 'Hora oficial de inicio de jornada (HH:mm)');
+
+-- 2. Tolerancia (15 minutos)
+INSERT INTO CONFIGURACION (clave, valor, descripcion)
+VALUES ('TOLERANCIA_MINUTOS', '15', 'Minutos de gracia antes de considerar Tardanza');
+
 COMMIT;
 
 PROMPT === SEMILLA PLANTADA. SISTEMA LISTO PARA OPERAR ===

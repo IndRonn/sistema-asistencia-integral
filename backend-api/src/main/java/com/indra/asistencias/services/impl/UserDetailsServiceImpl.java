@@ -1,7 +1,7 @@
 package com.indra.asistencias.services.impl;
 
 import com.indra.asistencias.models.Usuario; // <--- TU ENTIDAD ORACLE
-import com.indra.asistencias.repositories.IUsuarioRepository;
+import com.indra.asistencias.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User; // <--- EL OBJETO DE SPRING
@@ -17,7 +17,7 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final IUsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
     @Override
     @Transactional(readOnly = true)

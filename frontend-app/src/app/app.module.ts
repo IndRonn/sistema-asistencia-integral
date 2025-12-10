@@ -7,16 +7,19 @@ import { AppComponent } from './app.component';
 
 // Importamos el Interceptor usando el Alias
 import { AuthInterceptor } from '@core/interceptors/auth.interceptor';
+import {UiToastComponent} from "@shared/components/ui-toast/ui-toast.component";
 
 @NgModule({
   declarations: [
     AppComponent
   ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    HttpClientModule // <--- 2. AGREGAR AL ARRAY IMPORTS
-  ],
+    imports: [
+        BrowserModule,
+        AppRoutingModule,
+        HttpClientModule,
+        UiToastComponent,
+        // <--- 2. AGREGAR AL ARRAY IMPORTS
+    ],
   providers: [
     // 3. REGISTRAR EL INTERCEPTOR
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
