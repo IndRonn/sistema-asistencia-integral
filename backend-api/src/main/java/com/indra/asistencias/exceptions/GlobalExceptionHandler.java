@@ -21,37 +21,34 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UncategorizedSQLException.class)
     public ResponseEntity<Map<String, Object>> handleDbExceptions(UncategorizedSQLException ex) {
         Throwable cause = ex.getCause();
-
         if (cause instanceof SQLException sqlEx) {
             int errorCode = sqlEx.getErrorCode();
 
-            // CASO 1: Violación de Regla de Negocio (RAISE_APPLICATION_ERROR)
-            // Oracle usa el rango 20000-20999 para errores custom
+            // -20001: Ya marcó salida
             if (errorCode == 20001) {
-                return construirRespuestaError(
-                        HttpStatus.CONFLICT, // 409
-                        "ASIS-001",
-                        "Jornada ya cerrada. No puedes marcar de nuevo hoy." // Mensaje del Contrato
-                );
+                return construirRespuestaError(HttpStatus.CONFLICT, "ASIS-001", "Jornada ya cerrada. No puedes marcar de nuevo.");
+            }
+            // -20002: Usuario inactivo
+            if (errorCode == 20002) {
+                return construirRespuestaError(HttpStatus.UNAUTHORIZED, "AUTH-002", "Usuario inactivo.");
             }
 
-            if (errorCode == 20002) {
-                return construirRespuestaError(
-                        HttpStatus.CONFLICT, // 409
-                        "ASIS-002",
-                        "Usuario inactivo o no autorizado."
-                );
+            // --- NUEVOS CÓDIGOS HITO 3.1 ---
+
+            // -20005: Fecha futura
+            if (errorCode == 20005) {
+                return construirRespuestaError(HttpStatus.BAD_REQUEST, "JUST-002", "No se puede justificar una fecha futura.");
+            }
+
+            // -20006: Duplicado pendiente
+            if (errorCode == 20006) {
+                return construirRespuestaError(HttpStatus.CONFLICT, "JUST-001", "Ya existe una solicitud pendiente para esta fecha.");
             }
         }
 
-        // Error DB desconocido (500)
-        return construirRespuestaError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "DB-ERR-GEN",
-                "Error interno de base de datos: " + ex.getMessage()
-        );
+        // Default 500...
+        return construirRespuestaError(HttpStatus.INTERNAL_SERVER_ERROR, "DB-ERR", ex.getMessage());
     }
-
     // Helper para mantener el formato JSON limpio y estándar
     private ResponseEntity<Map<String, Object>> construirRespuestaError(HttpStatus status, String code, String message) {
         Map<String, Object> body = new HashMap<>();

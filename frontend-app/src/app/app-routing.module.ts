@@ -1,48 +1,47 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { authGuard } from '@core/guards/auth.guard'; // Alias @core
+import { authGuard } from '@core/guards/auth.guard';
+import { roleGuard } from '@core/guards/role.guard'; // ✅ Importar RoleGuard
 
 const routes: Routes = [
-  // 1. Redirección inicial (Raíz -> Login)
   { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
 
-  // 2. Ruta Pública: Login
   {
     path: 'auth/login',
     loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
   },
 
-  // 3. 🛡️ ZONA EMPLEADO (Dashboard)
+  // ZONA EMPLEADO (Solo requiere estar logueado)
   {
     path: 'dashboard',
-    canActivate: [authGuard], // Protegido por guardián
+    canActivate: [authGuard],
     children: [
       {
-        path: '', // URL: /dashboard
+        path: '',
         loadComponent: () => import('./features/dashboard/pages/home/home.component').then(m => m.HomeComponent)
       },
       {
-        path: 'historial', // URL: /dashboard/historial (¡ESTA ES LA QUE FALTABA!)
+        path: 'historial',
         loadComponent: () => import('./features/dashboard/pages/history/history.component').then(m => m.HistoryComponent)
       }
     ]
   },
 
-  // 4. 🛡️ ZONA ADMIN (God Mode)
+  // 🛡️ ZONA ADMIN (God Mode)
   {
     path: 'admin',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard], // ✅ DOBLE SEGURIDAD: Token + Rol
+    data: { role: 'ADMIN' },             // ✅ REQUISITO: Debe ser ADMIN
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
       {
         path: 'overview',
         loadComponent: () => import('./features/admin/pages/admin-overview/admin-overview.component').then(m => m.AdminOverviewComponent)
-      }
-      // Aquí agregaremos más rutas de admin luego
+      },
+      // Más adelante: /admin/usuarios, /admin/reportes, etc.
     ]
   },
 
-  // 5. Wildcard: Cualquier ruta desconocida te manda al Login
   { path: '**', redirectTo: 'auth/login' }
 ];
 

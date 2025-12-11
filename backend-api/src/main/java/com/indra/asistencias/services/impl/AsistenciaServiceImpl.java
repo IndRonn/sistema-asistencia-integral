@@ -1,7 +1,8 @@
 package com.indra.asistencias.services.impl;
 
-import com.indra.asistencias.dto.asistencia.EstadoAsistenciaDto; // <--- Usamos el nombre correcto
+import com.indra.asistencias.dto.asistencia.EstadoAsistenciaDto;
 import com.indra.asistencias.dto.asistencia.MarcaRespuestaDto;
+import com.indra.asistencias.dto.justificacion.SolicitudJustificacionDto; // <--- Import Nuevo
 import com.indra.asistencias.models.AsistenciaView;
 import com.indra.asistencias.models.Usuario;
 import com.indra.asistencias.repositories.AsistenciaRepository;
@@ -46,7 +47,6 @@ public class AsistenciaServiceImpl implements IAsistenciaService {
                             .horaEntrada(null)
                             .horaSalida(null)
                             .esTardanza(false)
-
                             // SIN HARDCODE: Usamos lo que diga Oracle
                             .horaInicioConfig(config.getOrDefault("HORA_ENTRADA", "08:00"))
                             .toleranciaMinutos(config.getOrDefault("TOLERANCIA_MINUTOS", "15"))
@@ -61,7 +61,7 @@ public class AsistenciaServiceImpl implements IAsistenciaService {
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
-        // 2. COMMAND: Ejecutar el SP (Oracle escribe)
+        // 2. COMMAND: Ejecutar el SP (Oracle escribe y valida -20001)
         String mensajeOracle = asistenciaRepository.registrarAsistencia(usuario.getIdUsuario(), ip, device);
 
         // 3. QUERY: Leer el estado "fresco"
@@ -71,12 +71,8 @@ public class AsistenciaServiceImpl implements IAsistenciaService {
         // 4. Lógica de Respuesta
         boolean esEntrada = "EN_JORNADA".equals(estado.getEstado());
 
-        // FIX DEFINITIVO:
-        // Como 'esTardanza' en el DTO es primitivo (boolean), ya no puede ser null.
-        // Podemos usarlo directamente sin miedo al NullPointerException.
+        // FIX: Uso seguro del primitivo boolean del DTO
         String estadoLetra = estado.isEsTardanza() ? "T" : "P";
-        // Nota: Lombok genera el getter como isEsTardanza() o isTardanza() dependiendo del nombre exacto.
-        // Si tu campo es "esTardanza", Lombok suele generar "isEsTardanza()". Verifica tu IDE.
 
         return MarcaRespuestaDto.builder()
                 .mensaje(mensajeOracle)
@@ -89,13 +85,11 @@ public class AsistenciaServiceImpl implements IAsistenciaService {
     @Override
     @Transactional(readOnly = true)
     public Page<AsistenciaView> obtenerHistorial(String username, LocalDate desde, LocalDate hasta, Pageable pageable) {
-
         // 1. Obtener Usuario
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
-        // 2. Definir Rango de Fechas por Defecto (Si vienen nulas)
-        // Regla: Si no filtra, mostramos el mes actual.
+        // 2. Definir Rango de Fechas por Defecto
         LocalDate inicio = (desde != null) ? desde : LocalDate.now().withDayOfMonth(1);
         LocalDate fin = (hasta != null) ? hasta : LocalDate.now();
 
@@ -106,5 +100,28 @@ public class AsistenciaServiceImpl implements IAsistenciaService {
                 fin,
                 pageable
         );
+    }
+
+    @Override
+    @Transactional
+    public void solicitarJustificacion(String username, SolicitudJustificacionDto dto) {
+        // 1. Obtener Usuario
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        // 2. DELEGACIÓN A ORACLE (SP_SOLICITAR_JUSTIFICACION)
+        // Ya no validamos fechas ni duplicados aquí. El SP lanzará:
+        // -20005 (Fecha futura) -> Capturado como 400 Bad Request
+        // -20006 (Duplicado)    -> Capturado como 409 Conflict
+
+        asistenciaRepository.solicitarJustificacion(
+                usuario.getIdUsuario(),
+                dto.getIdAsistencia(),
+                dto.getFecha(),
+                dto.getMotivo(),
+                dto.getTipo()
+        );
+
+        log.info("Solicitud creada para usuario: {}", username);
     }
 }

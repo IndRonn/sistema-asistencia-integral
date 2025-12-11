@@ -205,4 +205,156 @@ CREATE OR REPLACE PACKAGE BODY PKG_ASISTENCIA AS
 END PKG_ASISTENCIA;
 /
 
-PROMPT === LOGICA CORE DESPLEGADA EXITOSAMENTE ===
+
+-- Esta vista abstrae la complejidad de los JOINs para el Backend.
+-- El Admin solo hará "SELECT * FROM V_JUSTIFICACIONES_PENDIENTES" y tendrá todo listo.
+CREATE OR REPLACE VIEW V_JUSTIFICACIONES_PENDIENTES AS
+SELECT
+    j.id_justificacion,
+    j.id_usuario,
+    u.nombres || ' ' || u.apellidos AS empleado_nombre, -- Concatenación para UI
+    u.rol,
+    j.fecha_justificar,
+    j.motivo,
+    j.tipo,
+    j.fecha_solicitud,
+    j.estado,
+    j.id_asistencia -- Vital: PKG_ADMIN necesita esto para saber qué asistencia corregir
+FROM JUSTIFICACION j
+JOIN USUARIO u ON j.id_usuario = u.id_usuario
+WHERE j.estado = 'PENDIENTE'; -- Filtro Duro: El Admin no necesita ver ruido aquí.
+/
+
+
+-- Este trigger es el "Notario" del sistema.
+-- Garantiza que NINGÚN cambio de estado (Aprobado/Rechazado) quede sin firma.
+CREATE OR REPLACE TRIGGER TRG_AUDIT_JUSTIFICACION
+AFTER UPDATE ON JUSTIFICACION
+FOR EACH ROW
+DECLARE
+    v_accion VARCHAR2(10);
+BEGIN
+    -- Solo auditamos si el estado realmente cambió (Eficiencia)
+    IF :OLD.estado != :NEW.estado THEN
+        v_accion := 'UPDATE';
+
+        INSERT INTO LOG_JUSTIFICACION (
+            id_log_just,
+            id_justificacion,
+            accion,
+            estado_anterior,
+            estado_nuevo,
+            comentario,
+            usuario_modificador,
+            fecha_log
+        ) VALUES (
+            SEQ_LOG_JUST.NEXTVAL,
+            :NEW.id_justificacion,
+            v_accion,
+            :OLD.estado,
+            :NEW.estado,
+            'Resolución Administrativa', -- Motivo estándar del sistema
+            USER, -- Captura al usuario de BD (CONTROL_ASISTENCIA)
+            SYSDATE
+        );
+    END IF;
+END;
+/
+
+
+
+CREATE OR REPLACE PACKAGE PKG_ADMIN AS
+
+    -- HU-007: Aprobar/Rechazar Justificaciones
+    -- Este procedimiento es el JUEZ del sistema.
+    PROCEDURE SP_RESOLVER_JUSTIFICACION(
+        p_id_justificacion IN NUMBER,
+        p_nuevo_estado     IN VARCHAR2, -- 'APROBADO' o 'RECHAZADO'
+        p_admin_id         IN NUMBER,   -- ID del usuario Admin que toma la decisión
+        p_comentario       IN VARCHAR2, -- El "Por qué" de la decisión
+        p_mensaje          OUT VARCHAR2
+    );
+
+END PKG_ADMIN;
+/
+
+CREATE OR REPLACE PACKAGE BODY PKG_ADMIN AS
+
+    PROCEDURE SP_RESOLVER_JUSTIFICACION(
+        p_id_justificacion IN NUMBER,
+        p_nuevo_estado     IN VARCHAR2,
+        p_admin_id         IN NUMBER,
+        p_comentario       IN VARCHAR2,
+        p_mensaje          OUT VARCHAR2
+    ) IS
+        v_id_asistencia NUMBER;
+        v_estado_actual VARCHAR2(20);
+    BEGIN
+        -- 1. BLOQUEO PESIMISTA (Concurrency Lock)
+        -- Bloqueamos la fila para asegurar que nadie más la esté procesando en este milisegundo.
+        SELECT estado, id_asistencia
+        INTO v_estado_actual, v_id_asistencia
+        FROM JUSTIFICACION
+        WHERE id_justificacion = p_id_justificacion
+        FOR UPDATE;
+
+        -- 2. Validaciones de Negocio
+        IF v_estado_actual != 'PENDIENTE' THEN
+            RAISE_APPLICATION_ERROR(-20003, 'Esta solicitud ya fue procesada anteriormente.');
+        END IF;
+
+        IF p_nuevo_estado NOT IN ('APROBADO', 'RECHAZADO') THEN
+            RAISE_APPLICATION_ERROR(-20004, 'Estado inválido. Use APROBADO o RECHAZADO.');
+        END IF;
+
+        -- 3. Actualizar la Justificación (Esto dispara el TRG_AUDIT_JUSTIFICACION)
+        UPDATE JUSTIFICACION
+        SET estado = p_nuevo_estado,
+            admin_aprobador = p_admin_id,
+            fecha_resolucion = SYSDATE
+        WHERE id_justificacion = p_id_justificacion;
+
+        -- 4. INYECCIÓN DEL COMENTARIO (Cirugía en el Log)
+        -- El trigger acaba de insertar una fila en LOG_JUSTIFICACION con comentario genérico.
+        -- Nosotros actualizamos ESA fila con el comentario real del Admin.
+        -- Al estar en la misma transacción y tener la fila bloqueada, es seguro usar MAX(id).
+        UPDATE LOG_JUSTIFICACION
+        SET comentario = p_comentario
+        WHERE id_justificacion = p_id_justificacion
+          AND id_log_just = (
+              SELECT MAX(id_log_just)
+              FROM LOG_JUSTIFICACION
+              WHERE id_justificacion = p_id_justificacion
+          );
+
+        -- 5. EFECTO COLATERAL (Actualizar Asistencia)
+        IF p_nuevo_estado = 'APROBADO' THEN
+            -- Si la justificación está ligada a una asistencia (Tardanza/Olvido)
+            IF v_id_asistencia IS NOT NULL THEN
+                UPDATE ASISTENCIA
+                SET estado_asistencia = 'J' -- Cambiamos el estado a 'JUSTIFICADO'
+                WHERE id_asistencia = v_id_asistencia;
+            ELSE
+                -- Si es una falta total (no había registro), aquí podríamos insertar
+                -- una asistencia ficticia tipo 'J' si el negocio lo requiere.
+                NULL;
+            END IF;
+
+            p_mensaje := 'Solicitud APROBADA exitosamente.';
+        ELSE
+            p_mensaje := 'Solicitud RECHAZADA.';
+        END IF;
+
+        -- 6. SELLADO DE LA TRANSACCIÓN
+        COMMIT;
+
+    EXCEPTION
+        WHEN OTHERS THEN
+            ROLLBACK; -- Si algo falla, deshacemos TODO (Log, Justificacion, Asistencia)
+            RAISE;
+    END SP_RESOLVER_JUSTIFICACION;
+
+END PKG_ADMIN;
+/
+
+

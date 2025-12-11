@@ -1,39 +1,30 @@
 import { Injectable, signal } from '@angular/core';
 
+// ✅ AGREGAMOS 'warning' AL TIPO
 export interface ToastMessage {
   id: number;
   text: string;
-  type: 'success' | 'error' | 'info';
+  type: 'success' | 'error' | 'info' | 'warning';
 }
 
 @Injectable({
-  providedIn: 'root' // Singleton global disponible en toda la app
+  providedIn: 'root'
 })
 export class ToastService {
-  // Signal: La fuente de verdad reactiva
   toasts = signal<ToastMessage[]>([]);
 
-  /**
-   * Muestra una notificación flotante.
-   * @param text Mensaje a mostrar
-   * @param type Tipo de alerta (determina el color)
-   */
-  show(text: string, type: 'success' | 'error' | 'info' = 'info'): void {
+  // ✅ ACTUALIZAMOS LA FIRMA DEL MÉTODO
+  show(text: string, type: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
     const id = Date.now();
     const newToast: ToastMessage = { id, text, type };
 
-    // Agregamos inmutablemente al array
     this.toasts.update(current => [...current, newToast]);
 
-    // Auto-destrucción a los 3 segundos (Lógica de limpieza)
     setTimeout(() => {
       this.remove(id);
-    }, 3000);
+    }, 3000); // 3 segundos
   }
 
-  /**
-   * Elimina una notificación específica (usado por el botón X o el timer)
-   */
   remove(id: number): void {
     this.toasts.update(current => current.filter(t => t.id !== id));
   }

@@ -23,6 +23,7 @@ public class AsistenciaRepositoryImpl implements AsistenciaRepositoryCustom {
     private final JdbcTemplate jdbcTemplate;
     private SimpleJdbcCall procObtenerEstado;
     private SimpleJdbcCall procRegistrar;
+    private SimpleJdbcCall procSolicitarJustificacion;
 
     @PostConstruct
     public void init() {
@@ -70,6 +71,33 @@ public class AsistenciaRepositoryImpl implements AsistenciaRepositoryCustom {
         this.procRegistrar = new SimpleJdbcCall(jdbcTemplate)
                 .withCatalogName("PKG_ASISTENCIA")
                 .withProcedureName("SP_REGISTRAR_ASISTENCIA");
+
+        this.procSolicitarJustificacion = new SimpleJdbcCall(jdbcTemplate)
+                .withCatalogName("PKG_ASISTENCIA")
+                .withProcedureName("SP_SOLICITAR_JUSTIFICACION");
+    }
+
+    @Override
+    public String solicitarJustificacion(Long idUsuario, Long idAsistencia, java.time.LocalDate fecha, String motivo, String tipo) {
+        try {
+            Map<String, Object> inParams = Map.of(
+                    "p_usuario_id", idUsuario,
+                    "p_id_asistencia", idAsistencia != null ? idAsistencia : java.sql.Types.NULL, // Manejo de nulo
+                    "p_fecha", java.sql.Date.valueOf(fecha), // Conversión LocalDate -> SQL Date
+                    "p_motivo", motivo,
+                    "p_tipo", tipo
+            );
+
+            Map<String, Object> out = procSolicitarJustificacion.execute(inParams);
+
+            // Retornamos el mensaje de éxito del SP
+            return (String) out.get("p_mensaje_out");
+
+        } catch (Exception e) {
+            log.error("Error en SP_SOLICITAR_JUSTIFICACION: {}", e.getMessage());
+            // Relanzamos para que el GlobalExceptionHandler capture los códigos -20005 y -20006
+            throw e;
+        }
     }
 
     @Override

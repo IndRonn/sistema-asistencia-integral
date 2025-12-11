@@ -7,7 +7,8 @@ import java.util.Optional;
 public interface AsistenciaRepositoryCustom {
     Optional<EstadoAsistenciaDto> obtenerEstadoActual(Long idUsuario);
     String registrarAsistencia(Long idUsuario, String ip, String device);
-
-    // NUEVO MÉTODO PÚBLICO
     Map<String, String> obtenerConfiguracionAsistencia();
+
+    // NUEVO MÉTODO
+    String solicitarJustificacion(Long idUsuario, Long idAsistencia, java.time.LocalDate fecha, String motivo, String tipo);
 }

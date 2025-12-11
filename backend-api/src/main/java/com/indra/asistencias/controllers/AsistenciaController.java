@@ -2,9 +2,12 @@ package com.indra.asistencias.controllers;
 
 import com.indra.asistencias.dto.asistencia.EstadoAsistenciaDto;
 import com.indra.asistencias.dto.asistencia.MarcaRespuestaDto;
+import com.indra.asistencias.dto.justificacion.SolicitudJustificacionDto;
 import com.indra.asistencias.services.IAsistenciaService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/asistencia") // CAMBIO: Singular (según contrato)
@@ -60,5 +64,15 @@ public class AsistenciaController {
         );
 
         return ResponseEntity.ok(historial);
+    }
+
+    @PostMapping("/justificaciones")
+    public ResponseEntity<Map<String, String>> crearSolicitud(@Valid @RequestBody SolicitudJustificacionDto dto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        asistenciaService.solicitarJustificacion(auth.getName(), dto);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("mensaje", "Solicitud enviada correctamente. Estado: PENDIENTE"));
     }
 }

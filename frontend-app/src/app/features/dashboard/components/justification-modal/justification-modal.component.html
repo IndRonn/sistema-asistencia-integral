@@ -1,1 +1,66 @@
-<p>justification-modal works!</p>
+<div *ngIf="isOpen()"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+
+  <div class="w-full max-w-lg bg-sys-surface border border-sys-dim shadow-2xl transform transition-all scale-100">
+
+    <div class="h-1 w-full bg-blue-600"></div>
+
+    <div class="p-6">
+      <h2 class="text-xl font-serif text-white mb-1">Solicitar Justificación</h2>
+      <p class="text-xs text-sys-silver uppercase tracking-widest mb-6">
+        Expediente #{{ selectedRecord()?.idAsistencia || 'N/A' }}
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+
+        <div class="group">
+          <label class="block text-xs uppercase text-gray-500 mb-1">Fecha de Incidencia</label>
+          <input type="text" formControlName="fecha"
+                 class="w-full bg-sys-black border border-sys-dim text-gray-400 py-2 px-3 focus:outline-none cursor-not-allowed select-none font-mono">
+        </div>
+
+        <div class="group">
+          <label class="block text-xs uppercase text-gray-500 mb-1">Motivo Principal</label>
+          <select formControlName="tipo"
+                  class="w-full bg-transparent border-b border-gray-700 text-sys-silver py-2 px-1 focus:outline-none focus:border-sys-primary transition-all appearance-none cursor-pointer">
+            <option value="" disabled selected>Seleccione una opción</option>
+            <option *ngFor="let t of types" [value]="t" class="bg-sys-surface text-white">{{ t }}</option>
+          </select>
+          <div *ngIf="form.get('tipo')?.touched && form.get('tipo')?.invalid" class="text-sys-alert text-xs mt-1">
+            Requerido
+          </div>
+        </div>
+
+        <div class="group">
+          <label class="block text-xs uppercase text-gray-500 mb-1">Detalle / Explicación</label>
+          <textarea formControlName="motivo" rows="3"
+                    class="w-full bg-transparent border border-gray-700 text-sys-silver p-3 focus:outline-none focus:border-sys-primary transition-all resize-none placeholder-gray-700"
+                    placeholder="Escriba aquí el motivo detallado (mínimo 10 caracteres)..."></textarea>
+
+          <div class="flex justify-between mt-1">
+            <span *ngIf="form.get('motivo')?.touched && form.get('motivo')?.errors?.['required']" class="text-sys-alert text-xs">Requerido</span>
+            <span *ngIf="form.get('motivo')?.errors?.['minlength']" class="text-sys-warning text-xs">Mínimo 10 caracteres</span>
+            <span class="text-[10px] text-gray-600 ml-auto">
+              {{ form.get('motivo')?.value?.length || 0 }} chars
+            </span>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-sys-dim/30">
+          <button type="button" (click)="close()"
+                  class="px-4 py-2 text-xs uppercase font-bold text-gray-500 hover:text-white transition-colors">
+            Cancelar
+          </button>
+
+          <button type="submit"
+                  [disabled]="form.invalid || isSubmitting()"
+                  class="bg-sys-primary hover:bg-green-900 text-white px-6 py-2 text-xs uppercase font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <span *ngIf="isSubmitting()" class="animate-pulse">Enviando...</span>
+            <span *ngIf="!isSubmitting()">Enviar Solicitud</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

@@ -3,7 +3,9 @@ package com.indra.asistencias.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j; // Usamos Lombok para el Logger
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority; // Import necesario
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -11,7 +13,7 @@ import java.util.Date;
 import java.util.function.Function;
 
 @Component
-@Slf4j // 1. Genera automáticamente la variable 'log' (Mejor que LoggerFactory manual)
+@Slf4j
 public class JwtUtils {
 
     // Secreto Hardcodeado (HITO 1/2) - En HITO final irá a variables de entorno
@@ -25,17 +27,28 @@ public class JwtUtils {
     }
 
     // 3. Genera el Token (Firma Digital)
-    public String generateToken(String username) {
+    public String generateToken(Authentication authentication) {
+        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+
+        // Extraer el rol (asumimos que solo tiene 1 por ahora)
+        String rol = userPrincipal.getAuthorities().stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority) // Metodo correcto de la interfaz
+                .orElse("ROLE_EMPLEADO"); // Fallback
+
         return Jwts.builder()
-                .setSubject(username) // A quién pertenece
-                .setIssuedAt(new Date()) // Cuándo se creó
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs)) // Cuándo muere
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256) // El sello de lacre
+                .setSubject(userPrincipal.getUsername())
+                .claim("rol", rol) // <--- ¡AQUÍ ESTÁ LA CLAVE! AGREGAMOS EL ROL
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                // CORRECCIÓN: Usamos getSignInKey(), no "key()" que era un import erróneo
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 4. Extrae el usuario del token (Para saber quién hace la petición)
-    public String getUsernameFromToken(String token) {
+    // 4. Extrae el usuario del token
+    // (Renombrado a getUserNameFromJwtToken para estandarizar con tu Filtro)
+    public String getUserNameFromJwtToken(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -59,6 +72,8 @@ public class JwtUtils {
             log.error("Token JWT inválido: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
             log.error("Token JWT expirado: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            log.error("Token JWT no soportado: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             log.error("La cadena claims está vacía: {}", e.getMessage());
         }

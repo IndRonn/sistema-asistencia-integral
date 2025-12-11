@@ -48,23 +48,28 @@
       </tr>
 
       <tr *ngFor="let row of records()" class="group hover:bg-white/5 transition-colors">
+
         <td class="px-6 py-4 font-mono text-white border-l-2 border-transparent group-hover:border-sys-primary transition-all">
           {{ row.fecha }}
         </td>
         <td class="px-6 py-4 text-gray-300">{{ row.horaEntrada || '--:--' }}</td>
         <td class="px-6 py-4 text-gray-300">{{ row.horaSalida || '--:--' }}</td>
+
         <td class="px-6 py-4">
           <app-ui-badge [variant]="getVariant(row.estadoTexto)">
             {{ row.estadoTexto }}
           </app-ui-badge>
         </td>
+
         <td class="px-6 py-4 text-right">
           <button *ngIf="row.esJustificable"
-                  class="text-xs text-sys-silver hover:text-white underline decoration-sys-dim hover:decoration-white transition-all">
+                  (click)="openJustification(row)"
+                  class="text-xs text-sys-silver hover:text-white underline decoration-sys-dim hover:decoration-white transition-all cursor-pointer">
             Solicitar Justificación
           </button>
           <span *ngIf="!row.esJustificable" class="text-sys-dim text-xs select-none opacity-50">•</span>
         </td>
+
       </tr>
       </tbody>
     </table>
@@ -87,3 +92,5 @@
     </div>
   </div>
 </div>
+
+<app-justification-modal></app-justification-modal>

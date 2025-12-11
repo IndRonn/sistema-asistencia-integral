@@ -18,7 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
-@RequiredArgsConstructor // Inyecta los final
+@RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -33,20 +33,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = parseJwt(request);
 
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                String username = jwtUtils.getUsernameFromToken(jwt);
+                // CORRECCIÓN: Usar el nombre exacto del método en JwtUtils
+                String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
+                // AQUÍ ESTÁ EL SECRETO DE LOS ROLES:
+                // Aunque el token no traiga roles, esta línea va a la Base de Datos
+                // y carga el usuario COMPLETO, incluyendo su rol.
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                // Creamos la sesión de seguridad (Solo dura lo que dura la petición)
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
-                                userDetails.getAuthorities());
+                                userDetails.getAuthorities()); // <--- Aquí se inyectan los roles al contexto
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // Autorizamos al usuario en el contexto actual
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
@@ -56,7 +58,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // Extrae el token del header "Authorization: Bearer <token>"
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
 

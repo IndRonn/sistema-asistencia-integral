@@ -1,13 +1,98 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AttendanceService } from '@core/services/attendance/attendance.service';
+import { ToastService } from '@shared/components/ui-toast/toast.service';
+import { JustificationRequest, JustificationType } from '@core/models/justification.model';
+import { AttendanceRecord } from '@core/models/attendance.model';
 
 @Component({
   selector: 'app-justification-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './justification-modal.component.html',
-  styleUrls: ['./justification-modal.component.css']
+  styleUrls: [] // Tailwind maneja los estilos
 })
 export class JustificationModalComponent {
+  private fb = inject(FormBuilder);
+  private attendanceService = inject(AttendanceService);
+  private toast = inject(ToastService);
 
+  // Estados de Visibilidad y Carga
+  isOpen = signal<boolean>(false);
+  isSubmitting = signal<boolean>(false);
+
+  // Datos del registro seleccionado (Solo lectura para la vista)
+  selectedRecord = signal<AttendanceRecord | null>(null);
+
+  // Formulario Reactivo
+  form: FormGroup = this.fb.group({
+    fecha: [{ value: '', disabled: true }], // Deshabilitado visualmente
+    tipo: ['', [Validators.required]],
+    motivo: ['', [Validators.required, Validators.minLength(10)]]
+  });
+
+  // Opciones para el Select
+  types: JustificationType[] = ['SALUD', 'PERSONAL', 'TRABAJO'];
+
+  /**
+   * Método público para abrir el modal desde el componente padre.
+   * Recibe el registro de la tabla.
+   */
+  open(record: AttendanceRecord) {
+    this.selectedRecord.set(record);
+    this.isOpen.set(true);
+
+    // Resetear y pre-cargar formulario
+    this.form.reset({
+      fecha: record.fecha,
+      tipo: '',
+      motivo: ''
+    });
+  }
+
+  close() {
+    this.isOpen.set(false);
+    this.selectedRecord.set(null);
+  }
+
+  submit() {
+    if (this.form.invalid || !this.selectedRecord()) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.isSubmitting.set(true);
+
+    // Preparar Payload
+    const payload: JustificationRequest = {
+      idAsistencia: this.selectedRecord()!.idAsistencia,
+      fecha: this.selectedRecord()!.fecha, // Enviamos la fecha original del registro
+      tipo: this.form.get('tipo')?.value,
+      motivo: this.form.get('motivo')?.value
+    };
+
+    this.attendanceService.solicitarJustificacion(payload).subscribe({
+      next: (res) => {
+        this.toast.show(res.mensaje || 'Solicitud enviada correctamente', 'success');
+        this.isSubmitting.set(false);
+        this.close();
+        // Opcional: Emitir evento para recargar tabla (lo haremos en la integración)
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        const code = err.error?.code; // Ej: "JUST-001"
+        const msg = err.error?.message || 'Error al procesar solicitud';
+
+        // Manejo de Errores Inteligente (HU-006 / UX)
+        if (code === 'JUST-001') {
+          this.toast.show('⚠️ Ya existe una solicitud pendiente para esta fecha.', 'warning');
+        } else if (code === 'JUST-002') {
+          this.toast.show('⏳ No puedes justificar fechas futuras.', 'error');
+        } else {
+          this.toast.show(msg, 'error');
+        }
+      }
+    });
+  }
 }
