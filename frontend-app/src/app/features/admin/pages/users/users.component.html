@@ -1,1 +1,78 @@
-<p>users works!</p>
+<div class="p-6 min-h-screen text-sys-silver animate-fade-in">
+
+  <div class="mb-8 border-b border-sys-dim pb-6 flex justify-between items-end">
+    <div>
+      <h1 class="text-3xl font-serif text-white">Gestión de Usuarios</h1>
+      <p class="text-xs text-gray-500 uppercase tracking-[0.2em] mt-1">
+        Personal Activo: <span class="text-white font-bold">{{ totalElements() }}</span>
+      </p>
+    </div>
+
+    <button (click)="openCreateModal()"
+            class="bg-sys-primary hover:bg-green-800 text-white px-4 py-2 text-xs uppercase font-bold transition-all flex items-center gap-2">
+      <span>+ Nuevo Usuario</span>
+    </button>
+  </div>
+
+  <div class="mb-6 max-w-md">
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">🔍</span>
+      <input type="text"
+             [formControl]="searchControl"
+             placeholder="Buscar por nombre, usuario o email..."
+             class="w-full bg-sys-surface border border-sys-dim text-white py-2 pl-10 pr-4 focus:outline-none focus:border-sys-primary transition-all placeholder-gray-600 text-sm">
+    </div>
+  </div>
+
+  <div class="overflow-hidden border border-sys-dim bg-sys-surface shadow-2xl relative min-h-[400px]">
+
+    <table class="w-full text-left text-sm">
+      <thead class="bg-black/50 text-xs uppercase font-bold tracking-wider text-gray-500 border-b border-sys-dim">
+      <tr>
+        <th class="px-6 py-4 w-1/4">Usuario</th>
+        <th class="px-6 py-4 w-1/3">Nombre Completo</th>
+        <th class="px-6 py-4">Rol</th>
+        <th class="px-6 py-4 text-center">Estado</th>
+      </tr>
+      </thead>
+
+      <tbody class="divide-y divide-sys-dim/20 transition-opacity duration-300"
+             [class.opacity-40]="isLoading()"
+             [class.pointer-events-none]="isLoading()">
+
+      <tr *ngIf="!isLoading() && users().length === 0">
+        <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+          <span class="text-2xl block mb-2 opacity-50">🔍</span>
+          No se encontraron usuarios.
+        </td>
+      </tr>
+
+      <tr *ngFor="let user of users()" class="group hover:bg-white/5 transition-colors">
+
+        <td class="px-6 py-4">
+          <div class="font-bold text-white">{{ user.username }}</div>
+          <div class="text-xs text-sys-dim">{{ user.email }}</div>
+        </td>
+
+        <td class="px-6 py-4 text-gray-300">
+          {{ user.nombres }} {{ user.apellidos }}
+        </td>
+
+        <td class="px-6 py-4">
+          <app-ui-badge [variant]="user.rol === 'ADMIN' ? 'danger' : 'neutral'">
+            {{ user.rol }}
+          </app-ui-badge>
+        </td>
+
+        <td class="px-6 py-4 text-center">
+          <app-ui-switch
+            [checked]="user.estado === 'A'"
+            (changed)="onToggleStatus(user)">
+          </app-ui-switch>
+        </td>
+
+      </tr>
+      </tbody>
+    </table>
+  </div>
+<app-user-modal (saved)="loadUsers()"></app-user-modal>

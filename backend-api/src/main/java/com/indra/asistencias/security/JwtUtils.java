@@ -5,7 +5,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority; // Import necesario
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -16,38 +16,36 @@ import java.util.function.Function;
 @Slf4j
 public class JwtUtils {
 
-    // Secreto Hardcodeado (HITO 1/2) - En HITO final irá a variables de entorno
+
     private final String jwtSecret = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
     private final int jwtExpirationMs = 86400000; // 24 horas
 
-    // 2. Transforma el String Base64 en un objeto Key criptográfico real
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // 3. Genera el Token (Firma Digital)
+
     public String generateToken(Authentication authentication) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
-        // Extraer el rol (asumimos que solo tiene 1 por ahora)
+
         String rol = userPrincipal.getAuthorities().stream()
                 .findFirst()
-                .map(GrantedAuthority::getAuthority) // Metodo correcto de la interfaz
-                .orElse("ROLE_EMPLEADO"); // Fallback
+                .map(GrantedAuthority::getAuthority)
+                .orElse("ROLE_EMPLEADO");
 
         return Jwts.builder()
                 .setSubject(userPrincipal.getUsername())
-                .claim("rol", rol) // <--- ¡AQUÍ ESTÁ LA CLAVE! AGREGAMOS EL ROL
+                .claim("rol", rol)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                // CORRECCIÓN: Usamos getSignInKey(), no "key()" que era un import erróneo
+
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 4. Extrae el usuario del token
-    // (Renombrado a getUserNameFromJwtToken para estandarizar con tu Filtro)
+
     public String getUserNameFromJwtToken(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -61,7 +59,7 @@ public class JwtUtils {
         return claimsResolver.apply(claims);
     }
 
-    // 5. Valida si el token es auténtico
+
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(getSignInKey()).build().parseClaimsJws(authToken);

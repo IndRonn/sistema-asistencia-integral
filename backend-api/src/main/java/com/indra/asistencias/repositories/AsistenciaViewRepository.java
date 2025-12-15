@@ -11,8 +11,6 @@ import java.time.LocalDate;
 @Repository
 public interface AsistenciaViewRepository extends JpaRepository<AsistenciaView, Long> {
 
-    // Query Method mágico de Spring Data
-    // "Buscar por ID de usuario Y rango de fechas"
     Page<AsistenciaView> findByIdUsuarioAndFechaBetweenOrderByFechaDesc(
             Long idUsuario,
             LocalDate fechaInicio,

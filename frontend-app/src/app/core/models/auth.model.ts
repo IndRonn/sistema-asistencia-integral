@@ -1,18 +1,21 @@
+
 export interface LoginRequest {
   username: string;
   password: string;
 }
 
 export interface UserProfile {
-  id: number;
+  idUsuario: number;
   username: string;
-  nombreCompleto: string;
+  nombres: string;
+  apellidos: string;
   email: string;
   rol: 'ADMIN' | 'EMPLEADO';
+  estado?: string;
 }
 
-export interface AuthResponse {
+
+export interface LoginResponse {
   token: string;
-  type: string; // "Bearer"
   usuario: UserProfile;
 }

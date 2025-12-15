@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 public class JwtResponse {
     private String token;
 
-    @Builder.Default // Asegura que el builder use este valor por defecto
+    @Builder.Default
     private String type = "Bearer";
 
-    private UsuarioDto usuario; // Objeto anidado
+    private UsuarioDto usuario;
 }

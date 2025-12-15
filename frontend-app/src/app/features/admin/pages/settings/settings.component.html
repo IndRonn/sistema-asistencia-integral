@@ -1,1 +1,48 @@
-<p>settings works!</p>
+<div class="p-6 min-h-screen text-sys-silver animate-fade-in max-w-4xl mx-auto">
+
+  <div class="mb-8 border-b border-sys-dim pb-6">
+    <h1 class="text-3xl font-serif text-white">Configuración del Sistema</h1>
+    <p class="text-xs text-gray-500 uppercase tracking-[0.2em] mt-1">
+      Parámetros Globales (Caché Activa)
+    </p>
+  </div>
+
+  <div class="bg-sys-surface border border-sys-dim p-8 shadow-2xl relative overflow-hidden">
+
+    <div *ngIf="isLoading()" class="absolute inset-0 bg-sys-surface z-10 flex items-center justify-center">
+      <div class="animate-pulse text-sys-primary">Cargando parámetros...</div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()" class="space-y-8">
+
+      <div *ngFor="let cfg of configs()" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border-b border-sys-dim/30 pb-6 last:border-0">
+
+        <div class="md:col-span-1">
+          <label class="block text-sm font-bold text-white mb-1">{{ cfg.descripcion }}</label>
+          <div class="text-[10px] text-gray-500 font-mono uppercase">{{ cfg.clave }}</div>
+        </div>
+
+        <div class="md:col-span-2">
+          <input type="text" [formControlName]="cfg.clave"
+                 class="w-full bg-sys-black border border-sys-dim text-white p-3 focus:outline-none focus:border-sys-primary transition-all font-mono tracking-widest"
+                 [ngClass]="{'border-sys-alert': form.get(cfg.clave)?.invalid && form.get(cfg.clave)?.touched}">
+
+          <div *ngIf="form.get(cfg.clave)?.invalid && form.get(cfg.clave)?.touched" class="text-sys-alert text-xs mt-1">
+            Formato inválido (Revise HH:mm o números)
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-6 flex justify-end">
+        <button type="submit"
+                [disabled]="isSaving() || form.invalid || isLoading()"
+                class="bg-sys-primary hover:bg-green-800 text-white px-8 py-3 text-sm uppercase font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          <span *ngIf="isSaving()" class="animate-pulse">Guardando...</span>
+          <span *ngIf="!isSaving()">Guardar Cambios</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

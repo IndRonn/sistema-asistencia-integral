@@ -33,12 +33,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = parseJwt(request);
 
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                // CORRECCIÓN: Usar el nombre exacto del método en JwtUtils
+
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
-                // AQUÍ ESTÁ EL SECRETO DE LOS ROLES:
-                // Aunque el token no traiga roles, esta línea va a la Base de Datos
-                // y carga el usuario COMPLETO, incluyendo su rol.
+
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 UsernamePasswordAuthenticationToken authentication =

@@ -1,17 +1,19 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth.guard';
-import { roleGuard } from '@core/guards/role.guard'; // ✅ Importar RoleGuard
+import { roleGuard } from '@core/guards/role.guard';
 
 const routes: Routes = [
+  // 1. Redirección Inicial
   { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
 
+  // 2. Auth
   {
     path: 'auth/login',
     loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
   },
 
-  // ZONA EMPLEADO (Solo requiere estar logueado)
+  // 3. ZONA EMPLEADO
   {
     path: 'dashboard',
     canActivate: [authGuard],
@@ -27,18 +29,35 @@ const routes: Routes = [
     ]
   },
 
-  // 🛡️ ZONA ADMIN (God Mode)
+  // 4. ZONA ADMIN
   {
     path: 'admin',
-    canActivate: [authGuard, roleGuard], // ✅ DOBLE SEGURIDAD: Token + Rol
-    data: { role: 'ADMIN' },             // ✅ REQUISITO: Debe ser ADMIN
+    canActivate: [authGuard, roleGuard],
+    data: { role: 'ADMIN' },
+    // Cargamos el Layout (Menú Lateral)
+    loadComponent: () => import('./features/admin/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
+
       {
         path: 'overview',
         loadComponent: () => import('./features/admin/pages/admin-overview/admin-overview.component').then(m => m.AdminOverviewComponent)
       },
-      // Más adelante: /admin/usuarios, /admin/reportes, etc.
+
+      {
+        path: 'usuarios',
+        loadComponent: () => import('./features/admin/pages/users/users.component').then(m => m.UsersComponent)
+      },
+
+      {
+        path: 'configuracion',
+        loadComponent: () => import('./features/admin/pages/settings/settings.component').then(m => m.SettingsComponent)
+      },
+
+      {
+        path: 'reportes',
+        loadComponent: () => import('./features/admin/pages/reports/reports.component').then(m => m.ReportsComponent)
+      }
     ]
   },
 

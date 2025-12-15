@@ -1,10 +1,7 @@
-/* ARCHIVO: 03_seed_data.sql
-   PROYECTO: Sistema de Control de Asistencias (Slytherin Edition)
-   DESCRIPCIÓN: Datos iniciales obligatorios para el funcionamiento del sistema.
-   AUTOR: The Architect
+/* ARCHIVO: 04_seed_data.sql
+   Ronny Mendez
 */
 
-PROMPT === INICIANDO CARGA DE CONFIGURACION GLOBAL ===
 
 -- 1. PARAMETROS DEL SISTEMA
 -- Vitales para SP_REGISTRAR_ASISTENCIA. Si faltan, el sistema colapsa.
@@ -14,7 +11,6 @@ VALUES ('HORA_ENTRADA', '08:00', 'Hora oficial de inicio de jornada laboral (HH:
 INSERT INTO CONFIGURACION (clave, valor, descripcion)
 VALUES ('TOLERANCIA_MINUTOS', '15', 'Minutos de gracia antes de considerar Tardanza');
 
-PROMPT === CREANDO USUARIOS RAÍZ (ROOT USERS) ===
 
 -- NOTA DE SEGURIDAD:
 -- En producción, las contraseñas NUNCA deben ser texto plano.
@@ -35,10 +31,10 @@ INSERT INTO USUARIO (
 ) VALUES (
     SEQ_USUARIO.NEXTVAL,
     'admin',
-    '$2a$10$7Y9aYcgtKXHJfpM63XfeieEGjW8s6Sus9tYvzi839jT/gz0002.rW', -- Hash Dummy
+    '2a$10$sLB0JvVHQY/RbaIC8R7D3u9B33UOKi4Ab9Qqqz63rAM53jWk8iJPm', -- Hash Dummy
     'admin@sistema.com',
-    'System',
-    'Administrator',
+    'Ronny',
+    'Mendez',
     'ADMIN',
     'A'
 );
@@ -56,7 +52,7 @@ INSERT INTO USUARIO (
 ) VALUES (
     SEQ_USUARIO.NEXTVAL,
     'empleado1',
-    '$2a$10$BJ6psi9ASgfyQYjl7cOCZ.rcL.q16g1ZBpZvpeGJzPEFZu9rJyV6O', -- Hash Dummy
+    '$2a$10$2j2tX8EepmIGzgNc0bRIkOSUwH1966iOgnwQhWWFB42nXCh.v5gKe', -- Hash Dummy
     'empleado@sistema.com',
     'Juan',
     'Perez',
@@ -67,14 +63,4 @@ INSERT INTO USUARIO (
 -- Confirmar transacciones para persistencia inmediata
 COMMIT;
 
--- 1. Hora de entrada oficial (08:00 AM)
-INSERT INTO CONFIGURACION (clave, valor, descripcion)
-VALUES ('HORA_ENTRADA', '08:00', 'Hora oficial de inicio de jornada (HH:mm)');
 
--- 2. Tolerancia (15 minutos)
-INSERT INTO CONFIGURACION (clave, valor, descripcion)
-VALUES ('TOLERANCIA_MINUTOS', '15', 'Minutos de gracia antes de considerar Tardanza');
-
-COMMIT;
-
-PROMPT === SEMILLA PLANTADA. SISTEMA LISTO PARA OPERAR ===

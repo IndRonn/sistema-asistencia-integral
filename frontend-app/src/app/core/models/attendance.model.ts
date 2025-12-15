@@ -1,19 +1,12 @@
+
 export interface DashboardStatus {
   estado: 'SIN_MARCAR' | 'EN_JORNADA' | 'FINALIZADO';
   mensaje: string;
   horaEntrada: string | null;
   horaSalida: string | null;
   esTardanza: boolean;
-  // ✅ NUEVOS CAMPOS (Información de Reglas)
-  horaInicioConfig: string;     // "08:00"
-  toleranciaMinutos: string;    // "15"
-}
-
-export interface UIStateConfig {
-  color: string;
-  borderColor: string;
-  label: string;
-  actionLabel: string;
+  horaInicioConfig: string;
+  toleranciaMinutos: string;
 }
 
 export interface CheckInResponse {
@@ -23,34 +16,33 @@ export interface CheckInResponse {
   estadoAsistencia: string;
 }
 
-// Para el Historial (Hito 2.3)
+
+export interface UIStateConfig {
+  color: string;
+  borderColor: string;
+  label: string;
+  actionLabel: string;
+}
+
 export interface AttendanceRecord {
-  id: number;
+  // Identificadores
+  idAsistencia: number;
+  idUsuario?: number;
+  nombreCompleto?: string;
+  email?: string;
   fecha: string;
   horaEntrada: string;
   horaSalida: string | null;
+
+
   estado: string;
-  esJustificable: boolean;
-}
+  estadoDescripcion: string;
+  esTardanza?: boolean;
+  esJustificable?: boolean;
 
-export interface HistoryResponse {
-  content: AttendanceRecord[];
-  totalElements: number;
-  totalPages: number;
-}
 
-export interface AttendanceRecord {
-  idAsistencia: number;
-  idUsuario: number;
-  nombreCompleto: string;
-  email: string;
-  fecha: string;            // "2025-12-10"
-  horaEntrada: string;      // "04:56:31"
-  horaSalida: string | null;
-  estado: string;           // "P"
-  estadoTexto: string;      // "PUNTUAL"
-  esTardanza: boolean;
-  esJustificable: boolean;  // ✅ Ahora viene directo del back
+  justificacionEstado?: 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | null;
+  mensajeAdmin?: string | null;
 }
 
 export interface HistoryResponse {
@@ -58,7 +50,8 @@ export interface HistoryResponse {
   totalElements: number;
   totalPages: number;
   size: number;
-  number: number;
+  number: number;     // Página actual
   first: boolean;
   last: boolean;
 }
+

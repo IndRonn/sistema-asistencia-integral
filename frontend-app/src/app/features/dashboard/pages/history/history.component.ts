@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { AttendanceService } from '@core/services/attendance/attendance.service';
 import { AttendanceRecord } from '@core/models/attendance.model';
 import { UiBadgeComponent, BadgeVariant } from '@shared/components/ui-badge/ui-badge.component';
-// Importamos el Modal (Asegúrate que la ruta sea correcta según tu estructura)
 import { JustificationModalComponent } from '../../components/justification-modal/justification-modal.component';
 
 @Component({
@@ -15,13 +14,13 @@ import { JustificationModalComponent } from '../../components/justification-moda
   styleUrls: ['./history.component.css']
 })
 export class HistoryComponent implements OnInit {
-  // Referencia al Modal hijo para poder abrirlo
+  // Referencia al Modal hijo
   @ViewChild(JustificationModalComponent) modal!: JustificationModalComponent;
 
   private attendanceService = inject(AttendanceService);
 
-  // Estados de Datos
-  records = signal<AttendanceRecord[]>([]);
+
+  historial = signal<AttendanceRecord[]>([]);
   isLoading = signal<boolean>(true);
 
   // Paginación
@@ -44,9 +43,9 @@ export class HistoryComponent implements OnInit {
 
     this.attendanceService.getHistorial(page, 10, this.fechaInicio(), this.fechaFin()).subscribe({
       next: (res) => {
-        this.records.set(res.content || []);
 
-        // Actualizar estados de paginación
+        this.historial.set(res.content || []);
+
         this.currentPage.set(res.number);
         this.totalPages.set(res.totalPages);
         this.totalElements.set(res.totalElements);
@@ -62,14 +61,19 @@ export class HistoryComponent implements OnInit {
     });
   }
 
-  // ✅ MÉTODO FALTANTE: Este es el puente entre el botón HTML y el Modal
+
   openJustification(row: AttendanceRecord) {
     if (this.modal) {
       this.modal.open(row);
     }
   }
 
-  // Navegación de Páginas
+
+  onJustificationSaved() {
+    this.loadHistory(this.currentPage());
+  }
+
+  // Navegación
   prevPage() {
     if (!this.isFirstPage()) this.loadHistory(this.currentPage() - 1);
   }
@@ -78,13 +82,39 @@ export class HistoryComponent implements OnInit {
     if (!this.isLastPage()) this.loadHistory(this.currentPage() + 1);
   }
 
-  // Lógica Visual para los Badges
+
   getVariant(texto: string): BadgeVariant {
     if (!texto) return 'neutral';
     const s = texto.toUpperCase();
-    if (s.includes('PUNTUAL')) return 'success';
-    if (s.includes('TARDE') || s.includes('TARDANZA')) return 'warning';
-    if (s.includes('FALTA') || s.includes('AUSENTE')) return 'danger';
+
+    // Mapeo según lo que venga de BD ('P', 'T', 'A' o descripción completa)
+    if (s === 'P' || s.includes('PUNTUAL')) return 'success';
+    if (s === 'T' || s.includes('TARDE') || s.includes('TARDANZA')) return 'warning';
+    if (s === 'A' || s.includes('FALTA') || s.includes('AUSENTE')) return 'danger';
+    if (s === 'J' || s.includes('JUSTIFICADO')) return 'neutral';
+
     return 'neutral';
+  }
+
+
+  getJustificationVariant(estado: string | undefined | null): BadgeVariant {
+    if (!estado) return 'neutral';
+    switch (estado) {
+      case 'APROBADO': return 'success';  // Verde
+      case 'RECHAZADO': return 'danger';  // Rojo
+      case 'PENDIENTE': return 'warning'; // Amarillo
+      default: return 'neutral';
+    }
+  }
+
+
+  getJustificationIcon(estado: string | undefined | null): string {
+    if (!estado) return '';
+    switch (estado) {
+      case 'APROBADO': return '✓';
+      case 'RECHAZADO': return '✕';
+      case 'PENDIENTE': return '⏳';
+      default: return '';
+    }
   }
 }

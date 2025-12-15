@@ -1,73 +1,120 @@
-<div class="p-6 text-sys-silver animate-fade-in min-h-screen bg-sys-black">
+<div class="p-6 text-sys-silver animate-fade-in min-h-screen bg-sys-black max-w-7xl mx-auto">
 
   <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-6 border-b border-sys-dim pb-6">
     <div>
-      <h1 class="text-3xl font-serif text-white">Historial</h1>
+      <h1 class="text-3xl font-serif text-white">Historial de Asistencia</h1>
       <p class="text-xs text-gray-500 uppercase tracking-[0.2em] mt-1">
         Total Registros: <span class="text-sys-primary font-bold">{{ totalElements() }}</span>
       </p>
     </div>
 
-    <div class="flex gap-2 items-center bg-sys-surface p-1 border border-sys-dim">
+    <div class="flex gap-2 items-center bg-sys-surface p-1 border border-sys-dim shadow-lg">
       <input type="date" [ngModel]="fechaInicio()" (ngModelChange)="fechaInicio.set($event)"
-             class="bg-transparent border-none text-xs focus:ring-0 text-white p-2 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert">
+             class="bg-transparent border-none text-xs focus:ring-0 text-white p-2 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert uppercase font-mono">
       <span class="text-gray-600">-</span>
       <input type="date" [ngModel]="fechaFin()" (ngModelChange)="fechaFin.set($event)"
-             class="bg-transparent border-none text-xs focus:ring-0 text-white p-2 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert">
+             class="bg-transparent border-none text-xs focus:ring-0 text-white p-2 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert uppercase font-mono">
 
       <button (click)="loadHistory(0)"
-              class="ml-2 bg-sys-primary hover:bg-green-900 text-white px-4 py-2 text-xs uppercase font-bold transition-colors">
-        FILTRAR
+              class="ml-2 bg-sys-primary hover:bg-green-900 text-white px-4 py-2 text-xs uppercase font-bold transition-colors tracking-wider">
+        Filtrar
       </button>
     </div>
   </div>
 
-  <div class="overflow-hidden border border-sys-dim bg-sys-surface shadow-2xl relative">
+  <div class="overflow-visible border border-sys-dim bg-sys-surface shadow-2xl relative rounded-sm min-h-[400px]">
     <table class="w-full text-left text-sm">
-      <thead class="bg-black/50 text-xs uppercase font-bold tracking-wider text-gray-500 border-b border-sys-dim">
+      <thead class="bg-black/40 text-xs uppercase font-bold tracking-wider text-gray-500 border-b border-sys-dim">
       <tr>
         <th class="px-6 py-4">Fecha</th>
-        <th class="px-6 py-4">Entrada</th>
-        <th class="px-6 py-4">Salida</th>
-        <th class="px-6 py-4">Estado</th>
-        <th class="px-6 py-4 text-right">Acción</th>
-      </tr>
+        <th class="px-6 py-4">Entrada / Salida</th>
+        <th class="px-6 py-4 text-center">Estado Asistencia</th>
+        <th class="px-6 py-4 text-center">Gestión / Veredicto</th> </tr>
       </thead>
+
       <tbody class="divide-y divide-sys-dim/20">
 
       <tr *ngIf="isLoading()">
-        <td colspan="5" class="px-6 py-12 text-center text-gray-500 animate-pulse">
-          Sincronizando registros...
+        <td colspan="4" class="px-6 py-12 text-center text-gray-500 animate-pulse">
+          Sincronizando registros con el servidor...
         </td>
       </tr>
 
-      <tr *ngIf="!isLoading() && records().length === 0">
-        <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">
-          No hay registros para mostrar.
+      <tr *ngIf="!isLoading() && historial().length === 0">
+        <td colspan="4" class="px-6 py-12 text-center text-gray-500 italic">
+          No hay registros para mostrar en este periodo.
         </td>
       </tr>
 
-      <tr *ngFor="let row of records()" class="group hover:bg-white/5 transition-colors">
+      <tr *ngFor="let row of historial()" class="group hover:bg-white/5 transition-colors">
 
         <td class="px-6 py-4 font-mono text-white border-l-2 border-transparent group-hover:border-sys-primary transition-all">
-          {{ row.fecha }}
+          {{ row.fecha | date:'EEEE, d MMM' : '' : 'es-ES' | titlecase }}
         </td>
-        <td class="px-6 py-4 text-gray-300">{{ row.horaEntrada || '--:--' }}</td>
-        <td class="px-6 py-4 text-gray-300">{{ row.horaSalida || '--:--' }}</td>
 
         <td class="px-6 py-4">
-          <app-ui-badge [variant]="getVariant(row.estadoTexto)">
-            {{ row.estadoTexto }}
+          <div class="flex flex-col gap-1 font-mono text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-sys-dim w-8 text-right">IN:</span>
+              <span class="text-white">{{ row.horaEntrada || '--:--' }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sys-dim w-8 text-right">OUT:</span>
+              <span class="text-white">{{ row.horaSalida || '--:--' }}</span>
+            </div>
+          </div>
+        </td>
+
+        <td class="px-6 py-4 text-center">
+          <app-ui-badge [variant]="getVariant(row.estadoDescripcion)">
+            {{ row.estadoDescripcion }}
           </app-ui-badge>
         </td>
 
-        <td class="px-6 py-4 text-right">
-          <button *ngIf="row.esJustificable"
+        <td class="px-6 py-4 text-center relative">
+
+          <div *ngIf="row.justificacionEstado" class="relative group/tooltip inline-block cursor-help z-10">
+
+            <app-ui-badge [variant]="getJustificationVariant(row.justificacionEstado)">
+              <span class="mr-1 font-bold">{{ getJustificationIcon(row.justificacionEstado) }}</span>
+              {{ row.justificacionEstado }}
+            </app-ui-badge>
+
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 hidden group-hover/tooltip:block z-50 animate-fade-in-up">
+              <div class="bg-black border border-sys-dim text-white text-xs p-3 rounded shadow-[0_0_20px_rgba(0,0,0,0.8)] relative text-left">
+
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black border-r border-b border-sys-dim rotate-45"></div>
+
+                <div *ngIf="row.justificacionEstado === 'RECHAZADO'">
+                  <div class="font-bold text-sys-alert uppercase mb-1 flex items-center gap-1">⛔ Motivo Rechazo:</div>
+                  <div class="italic text-gray-300 font-serif leading-relaxed">"{{ row.mensajeAdmin || 'Sin comentarios.' }}"</div>
+                </div>
+
+                <div *ngIf="row.justificacionEstado === 'APROBADO'">
+                  <div class="font-bold text-sys-success uppercase mb-1 flex items-center gap-1">✅ Resolución:</div>
+                  <div class="italic text-gray-300 font-serif leading-relaxed">"{{ row.mensajeAdmin || 'Justificación aceptada.' }}"</div>
+                </div>
+
+                <div *ngIf="row.justificacionEstado === 'PENDIENTE'">
+                  <div class="font-bold text-sys-warning uppercase mb-1 flex items-center gap-1">⏳ En Revisión</div>
+                  <div class="text-gray-400">Su solicitud ha sido enviada al tribunal administrativo.</div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <button *ngIf="!row.justificacionEstado && (row.estado === 'T' || row.estado === 'A')"
                   (click)="openJustification(row)"
-                  class="text-xs text-sys-silver hover:text-white underline decoration-sys-dim hover:decoration-white transition-all cursor-pointer">
-            Solicitar Justificación
+                  class="text-[10px] font-bold text-sys-primary border border-sys-primary px-3 py-1 hover:bg-sys-primary hover:text-sys-black transition-all uppercase tracking-widest shadow-[0_0_10px_transparent] hover:shadow-[0_0_10px_#4ade8055]">
+            Justificar
           </button>
-          <span *ngIf="!row.esJustificable" class="text-sys-dim text-xs select-none opacity-50">•</span>
+
+          <span *ngIf="!row.justificacionEstado && (row.estado === 'P' || row.estado === 'J')"
+                class="text-sys-dim text-xs select-none opacity-30">
+            —
+          </span>
+
         </td>
 
       </tr>
@@ -75,9 +122,7 @@
     </table>
 
     <div *ngIf="!isLoading() && totalElements() > 0" class="bg-black/30 px-6 py-3 border-t border-sys-dim flex justify-between items-center text-xs text-gray-500 uppercase tracking-widest">
-
       <span>Página {{ currentPage() + 1 }} de {{ totalPages() }}</span>
-
       <div class="flex gap-2">
         <button (click)="prevPage()" [disabled]="isFirstPage()"
                 class="px-3 py-1 border border-sys-dim hover:bg-sys-dim hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all">
@@ -88,9 +133,8 @@
           Siguiente
         </button>
       </div>
-
     </div>
   </div>
 </div>
 
-<app-justification-modal></app-justification-modal>
+<app-justification-modal (saved)="onJustificationSaved()"></app-justification-modal>

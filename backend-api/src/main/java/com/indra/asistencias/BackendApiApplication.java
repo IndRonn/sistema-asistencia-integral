@@ -3,15 +3,17 @@ package com.indra.asistencias;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 
 import java.util.TimeZone;
 
 @SpringBootApplication
+@EnableCaching
 public class BackendApiApplication {
 
     @PostConstruct
     void started() {
-        // Forzamos al Backend a trabajar en la misma zona que tú (Perú/Bogotá)
+        // zona Horaria
         TimeZone.setDefault(TimeZone.getTimeZone("America/Lima"));
     }
 

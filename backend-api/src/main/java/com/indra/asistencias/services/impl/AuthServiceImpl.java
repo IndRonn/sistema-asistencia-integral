@@ -28,44 +28,41 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public JwtResponse login(LoginRequest request) {
-        // 1. Autenticar (Lanza excepción si falla - BadCredentialsException)
+        // Autenticar (Lanza excepción si falla - BadCredentialsException)
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-        // 2. Establecer contexto de seguridad
+        // Establecer contexto de seguridad
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // 3. Generar Token
-        // CORRECCIÓN TÁCTICA: Pasamos el objeto 'authentication' completo, no el string.
-        // Esto permite que JwtUtils extraiga el ROL internamente.
+        // Generar Token
         String jwt = jwtUtils.generateToken(authentication);
 
-        // 4. Obtener datos de usuario (Para devolver el perfil en el JSON)
+        // Obtener datos de usuario (Para devolver el perfil en el JSON)
         Usuario usuario = usuarioRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
         log.info("Usuario logueado exitosamente: {}", usuario.getUsername());
 
-        // 5. Mapear respuesta
+
         return usuarioMapper.toJwtResponse(usuario, jwt);
     }
 
     @Override
     public JwtResponse validateToken(String token) {
-        // 1. Validar integridad criptográfica (Firma y Expiración)
+
         if (!jwtUtils.validateJwtToken(token)) {
             throw new IllegalArgumentException("Token inválido o expirado");
         }
 
-        // 2. Extraer usuario del token
-        // CORRECCIÓN TÁCTICA: Usamos el nombre actualizado del método
+
         String username = jwtUtils.getUserNameFromJwtToken(token);
 
-        // 3. Buscar datos frescos en la BD
+
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-        // 4. Retornar la respuesta (Token renovado o el mismo)
+
         return usuarioMapper.toJwtResponse(usuario, token);
     }
 }

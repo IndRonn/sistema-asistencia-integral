@@ -7,10 +7,8 @@ public class PasswordGenerator {
     public static void main(String[] args) {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-        // La contraseña que quieres usar
         String rawPassword = "12345678";
 
-        // Generando el Hash
         String encodedPassword = encoder.encode(rawPassword);
 
         System.out.println("=========================================");

@@ -1,6 +1,5 @@
-/* ARCHIVO: 04_logic_core.sql
-   AUTOR: The Architect
-   DESCRIPCIÓN: Implementación del Core de Negocio (Triggers, Vistas y Paquetes).
+/* ARCHIVO: 05_logic_core.sql
+   Ronny Mendez
 */
 
 PROMPT === 1. CREANDO TRIGGER DE AUDITORIA (EL OJO QUE TODO LO VE) ===

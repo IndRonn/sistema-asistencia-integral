@@ -10,5 +10,5 @@ public class ResolucionDto {
     @Pattern(regexp = "^(APROBADO|RECHAZADO)$", message = "Solo se permite APROBADO o RECHAZADO")
     private String estado;
 
-    private String comentario; // Opcional
+    private String comentario;
 }

@@ -17,10 +17,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)// Permite usar @PreAuthorize en los controladores si quieres
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -30,31 +34,44 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Deshabilitar CSRF para APIs REST
-                .cors(cors -> cors.configure(http)) // Habilitar CORS (importante para Angular)
+                .csrf(csrf -> csrf.disable())
+                // 1. Cors
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // 1. ZONA PÚBLICA (Login)
                         .requestMatchers("/auth/**").permitAll()
-
-                        // 2. ZONA ADMINISTRATIVA (Solo ADMIN)
-                        // Nota: Spring busca automáticamente "ROLE_ADMIN" cuando usas hasRole("ADMIN")
                         .requestMatchers("/admin/**", "/usuarios/**").hasRole("ADMIN")
-
-                        // 3. ZONA EMPLEADO (EMPLEADO y ADMIN)
-                        // El Admin también debería poder ver cosas de empleados si es necesario
                         .requestMatchers("/asistencia/**").hasAnyRole("EMPLEADO", "ADMIN")
-
-                        // 4. EL RESTO: Cerrado
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No guardar cookies, usar JWT
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // Permitir Front
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+
+        // Permitir métodos HTTP
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+
+        // Permitir headers
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+        // 4. Permitir credenciales (opcional, pero útil si usaras cookies en el futuro)
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // Aplicar a todas las rutas
+        return source;
+    }
+
 
     @Bean
     public AuthenticationProvider authenticationProvider() {

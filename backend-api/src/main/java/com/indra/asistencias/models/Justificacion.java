@@ -38,12 +38,11 @@ public class Justificacion {
     private String tipo;
 
     @Column(name = "estado", nullable = false)
-    private String estado; // 'PENDIENTE', 'APROBADO', 'RECHAZADO'
+    private String estado;
 
     @Column(name = "fecha_solicitud")
     private LocalDateTime fechaSolicitud;
 
-    // Auditoría automática antes de insertar
     @PrePersist
     public void prePersist() {
         this.fechaSolicitud = LocalDateTime.now();

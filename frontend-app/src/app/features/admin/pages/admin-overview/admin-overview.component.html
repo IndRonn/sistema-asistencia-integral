@@ -1,1 +1,187 @@
-<p>admin-overview works!</p>
+<div class="p-6 min-h-screen text-sys-silver animate-fade-in space-y-8 max-w-[1600px] mx-auto">
+
+  <div class="flex flex-col md:flex-row justify-between items-end border-b border-sys-dim pb-6">
+    <div>
+      <h1 class="text-3xl font-serif text-white">Centro de Comando</h1>
+      <p class="text-xs text-gray-500 uppercase tracking-[0.2em] mt-1">
+        Sistema de Vigilancia & Gestión
+      </p>
+    </div>
+    <div class="flex items-center gap-2 text-[10px] uppercase tracking-widest text-sys-primary bg-sys-primary/10 px-3 py-1 rounded-full border border-sys-primary/20">
+      <span class="relative flex h-2 w-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sys-primary opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-sys-primary"></span>
+      </span>
+      Sistema Operativo
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="kpis()">
+
+    <div class="bg-sys-surface border border-sys-dim p-5 shadow-lg relative overflow-hidden group hover:border-sys-primary transition-colors flex flex-col justify-between h-32">
+      <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 text-6xl transition-opacity">👥</div>
+      <div>
+        <div class="text-xs uppercase text-gray-500 tracking-widest font-bold">Presentes Hoy</div>
+        <div class="text-4xl font-mono text-white font-bold mt-1">
+          {{ kpis()?.presentes }} <span class="text-sm text-gray-600 font-normal">/ {{ kpis()?.totalEmpleados }}</span>
+        </div>
+      </div>
+      <div class="text-[10px] text-sys-primary flex items-center gap-1">
+        <span class="inline-block w-1 h-1 rounded-full bg-sys-primary"></span> Agentes en campo
+      </div>
+    </div>
+
+    <div class="bg-sys-surface border border-sys-dim p-4 shadow-lg flex items-center gap-4 relative overflow-hidden group hover:border-sys-primary transition-colors h-32">
+      <div class="relative w-20 h-20 rounded-full shadow-xl shrink-0" [ngStyle]="pieChartStyle">
+        <div class="absolute inset-2 bg-sys-surface rounded-full flex items-center justify-center">
+          <span class="text-xs font-bold text-white">{{ kpis()?.tasaAsistencia }}%</span>
+        </div>
+      </div>
+      <div class="flex-1 z-10">
+        <div class="text-xs uppercase text-gray-500 tracking-widest font-bold mb-2">Puntualidad</div>
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 rounded-full bg-sys-primary shadow-[0_0_5px_#4ade80]"></div>
+          <span class="text-xs text-gray-300">A tiempo: <b class="text-white">{{ kpis()?.puntuales }}</b></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-sys-warning shadow-[0_0_5px_#facc15]"></div>
+          <span class="text-xs text-gray-300">Tarde: <b class="text-white">{{ kpis()?.tardanzas }}</b></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-sys-surface border border-sys-dim p-5 shadow-lg border-l-4 border-l-sys-alert flex flex-col justify-between h-32 hover:bg-white/5 transition-colors">
+      <div>
+        <div class="text-xs uppercase text-sys-alert tracking-widest font-bold flex items-center gap-2">
+          🚫 Ausentes
+        </div>
+        <div class="text-4xl font-mono text-white font-bold mt-1">{{ kpis()?.ausentes }}</div>
+      </div>
+      <div class="text-[10px] text-gray-500">Sin registro de entrada</div>
+    </div>
+
+    <div class="bg-sys-surface border border-sys-dim p-5 shadow-lg flex flex-col justify-center gap-2 h-32 hover:bg-white/5 transition-colors">
+      <div class="text-xs uppercase text-gray-500 tracking-widest font-bold">Diagnóstico</div>
+      <div class="text-sm text-gray-300 font-medium">
+        <span *ngIf="kpis()?.tasaAsistencia! >= 90" class="text-sys-primary">🟢 Operación Óptima</span>
+        <span *ngIf="kpis()?.tasaAsistencia! < 90 && kpis()?.tasaAsistencia! >= 70" class="text-sys-warning">🟡 Desempeño Regular</span>
+        <span *ngIf="kpis()?.tasaAsistencia! < 70" class="text-sys-alert">🔴 Estado Crítico</span>
+      </div>
+      <p class="text-[10px] text-gray-500 leading-tight mt-1">
+        El nivel de asistencia impacta directamente en la productividad diaria.
+      </p>
+    </div>
+  </div>
+
+  <div class="bg-sys-surface border border-sys-dim p-4 shadow-lg h-80 flex flex-col relative" *ngIf="chartOption()">
+    <div class="flex justify-between items-center mb-2 px-2">
+      <h3 class="text-xs uppercase text-gray-500 tracking-widest font-bold">Evolución Semanal</h3>
+      <span class="text-[10px] text-sys-primary font-mono bg-sys-primary/10 px-2 py-0.5 rounded">
+        ANÁLISIS DE TENDENCIAS
+      </span>
+    </div>
+    <div echarts
+         [options]="chartOption()!"
+         class="w-full flex-1"
+         [autoResize]="true">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[600px]">
+
+    <div class="xl:col-span-1 bg-sys-surface border border-sys-dim shadow-xl flex flex-col h-full rounded-sm overflow-hidden">
+      <div class="p-4 border-b border-sys-dim bg-black/20 flex justify-between items-center shrink-0">
+        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+          <span class="text-sys-primary text-lg animate-pulse">●</span> Monitor en Vivo
+        </h3>
+        <span class="text-[10px] text-gray-500 font-mono">LIVE FEED</span>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+        <div *ngIf="!monitorVivo() && !kpis()" class="text-center py-10 text-gray-500 text-xs animate-pulse">
+          Estableciendo enlace seguro...
+        </div>
+        <div *ngIf="monitorVivo().length === 0 && kpis()" class="flex flex-col items-center justify-center h-full text-gray-600 gap-2 opacity-50">
+          <span class="text-3xl">📡</span>
+          <span class="text-xs italic">Sin actividad reciente en portería</span>
+        </div>
+        <div *ngFor="let m of monitorVivo()" class="flex items-center gap-3 p-3 bg-sys-black/40 border-l-2 border-transparent hover:border-sys-primary hover:bg-white/5 transition-all group animate-fade-in-right">
+          <div class="relative">
+            <div class="w-8 h-8 rounded bg-sys-dim flex items-center justify-center text-xs font-bold text-white group-hover:bg-sys-primary group-hover:text-sys-black transition-colors uppercase">
+              {{ m.nombreCompleto.charAt(0) }}
+            </div>
+            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-sys-primary rounded-full border-2 border-sys-black"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-white font-medium truncate">{{ m.nombreCompleto }}</div>
+            <div class="text-[10px] text-gray-500 flex items-center gap-2">
+              <span class="font-mono text-sys-primary">{{ m.horaEntrada }}</span>
+              <span class="truncate max-w-[120px] opacity-70" title="{{ m.dispositivo }}">💻 {{ m.dispositivo }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="xl:col-span-2 bg-sys-surface border border-sys-dim shadow-xl flex flex-col h-full rounded-sm overflow-hidden">
+      <div class="p-4 border-b border-sys-dim bg-black/20 flex justify-between items-center shrink-0">
+        <div>
+          <h3 class="text-sm font-bold text-white uppercase tracking-widest">⚖️ Tribunal Administrativo</h3>
+          <p class="text-[10px] text-gray-500 mt-0.5">Solicitudes pendientes de resolución</p>
+        </div>
+        <div class="text-xs font-bold bg-sys-dim px-2 py-1 rounded text-white border border-gray-600">
+          {{ pendientes().length }} Pendientes
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto relative custom-scrollbar">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-sys-black text-xs uppercase font-bold tracking-wider text-gray-500 border-b border-sys-dim sticky top-0 z-10">
+          <tr>
+            <th class="px-6 py-3 bg-sys-black">Empleado</th>
+            <th class="px-6 py-3 bg-sys-black">Fecha / Motivo</th>
+            <th class="px-6 py-3 bg-sys-black text-center">Tipo</th>
+            <th class="px-6 py-3 bg-sys-black text-center">Veredicto</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-sys-dim/20">
+          <tr *ngIf="isLoading()">
+            <td colspan="4" class="px-6 py-20 text-center text-gray-500 animate-pulse">Cargando expedientes...</td>
+          </tr>
+          <tr *ngIf="!isLoading() && pendientes().length === 0">
+            <td colspan="4" class="px-6 py-20 text-center text-gray-500">
+              <div class="flex flex-col items-center gap-2 opacity-50">
+                <span class="text-3xl">✓</span>
+                <span class="text-sm font-medium">Bandeja limpia.</span>
+                <span class="text-xs">La justicia ha sido servida.</span>
+              </div>
+            </td>
+          </tr>
+          <tr *ngFor="let item of pendientes()" class="group hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4">
+              <div class="font-bold text-white">{{ item.empleadoNombre }}</div>
+              <div class="text-xs text-sys-dim font-mono">{{ item.rol }}</div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="font-mono text-xs text-sys-primary mb-1">{{ item.fechaJustificar }}</div>
+              <p class="text-xs text-gray-400 italic max-w-xs truncate" title="{{ item.motivo }}">"{{ item.motivo }}"</p>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <app-ui-badge [variant]="getVariant(item.tipo)">{{ item.tipo }}</app-ui-badge>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex justify-center gap-3 opacity-60 group-hover:opacity-100 transition-all">
+                <button (click)="openDecision(item.idJustificacion, 'APROBADO')" class="w-8 h-8 rounded-full border border-sys-primary text-sys-primary hover:bg-sys-primary hover:text-white transition-all flex items-center justify-center shadow-[0_0_10px_transparent] hover:shadow-[0_0_10px_rgba(74,222,128,0.4)]" title="Aprobar">✓</button>
+                <button (click)="openDecision(item.idJustificacion, 'RECHAZADO')" class="w-8 h-8 rounded-full border border-sys-alert text-sys-alert hover:bg-sys-alert hover:text-white transition-all flex items-center justify-center shadow-[0_0_10px_transparent] hover:shadow-[0_0_10px_rgba(248,113,113,0.4)]" title="Rechazar">✕</button>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<app-resolution-modal (resolveEvent)="onResolved($event)"></app-resolution-modal>

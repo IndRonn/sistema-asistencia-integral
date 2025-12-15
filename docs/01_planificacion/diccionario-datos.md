@@ -1,5 +1,5 @@
 # 📚 Diccionario de Datos Maestro (Parte 1: Núcleo Operativo)
-**Sistema:** Control de Asistencias "Slytherin Edition"
+**Sistema:** Control de Asistencias
 **Base de Datos:** Oracle Database (Compatible 19c/21c/23c OCI)
 **Schema Owner:** `CONTROL_ASISTENCIA`
 

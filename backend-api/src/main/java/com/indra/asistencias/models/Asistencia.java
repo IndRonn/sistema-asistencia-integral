@@ -23,22 +23,19 @@ public class Asistencia {
     @Column(name = "id_asistencia", nullable = false)
     private Long idAsistencia;
 
-    // Relación Muchos-a-Uno: Muchas asistencias pertenecen a Un usuario
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
     @Column(name = "fecha", nullable = false)
-    private LocalDate fecha; // Solo la fecha (TRUNC)
+    private LocalDate fecha;
 
     @Column(name = "hora_entrada", nullable = false)
-    private LocalDateTime horaEntrada; // Timestamp completo
+    private LocalDateTime horaEntrada;
 
     @Column(name = "hora_salida")
-    private LocalDateTime horaSalida; // Puede ser NULL (Si está trabajando)
+    private LocalDateTime horaSalida;
 
-    // Valores: 'P' (Puntual), 'T' (Tarde), 'A' (Ausente), etc.
-    // IMPORTANTE: Oracle CHAR(1) requiere columnDefinition fijo
     @Column(name = "estado_asistencia", nullable = false, columnDefinition = "CHAR(1)")
     private String estadoAsistencia;
 

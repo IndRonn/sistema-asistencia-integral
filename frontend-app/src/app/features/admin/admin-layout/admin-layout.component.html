@@ -1,1 +1,57 @@
-<p>admin-layout works!</p>
+<div class="flex h-screen bg-sys-black overflow-hidden font-sans">
+
+  <aside class="w-64 bg-sys-surface border-r border-sys-dim flex flex-col shadow-2xl z-20">
+
+    <div class="h-20 flex items-center px-8 border-b border-sys-dim bg-black/20">
+      <div class="text-sys-silver tracking-[0.2em] font-serif font-bold text-lg">
+        <span class="text-sys-primary">I</span>NDRA
+      </div>
+    </div>
+
+    <nav class="flex-1 py-8 px-4 space-y-2">
+
+      <a routerLink="/admin/overview" routerLinkActive="bg-sys-primary/10 text-white border-sys-primary"
+         class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 rounded hover:bg-white/5 hover:text-white transition-all border-l-2 border-transparent group">
+        <span class="text-lg group-hover:scale-110 transition-transform">⚖️</span>
+        Centro de Comando
+      </a>
+
+      <a routerLink="/admin/usuarios" routerLinkActive="bg-sys-primary/10 text-white border-sys-primary"
+         class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 rounded hover:bg-white/5 hover:text-white transition-all border-l-2 border-transparent group">
+        <span class="text-lg group-hover:scale-110 transition-transform">👥</span>
+        Gestión de Usuarios
+      </a>
+
+      <a routerLink="/admin/configuracion" routerLinkActive="bg-sys-primary/10 text-white border-sys-primary"
+         class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 rounded hover:bg-white/5 hover:text-white transition-all border-l-2 border-transparent group">
+        <span class="text-lg group-hover:scale-110 transition-transform">⚙️</span>
+        Configuración
+      </a>
+
+      <a routerLink="/admin/reportes" routerLinkActive="bg-sys-primary/10 text-white border-sys-primary"
+         class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 rounded hover:bg-white/5 hover:text-white transition-all border-l-2 border-transparent group">
+        <span class="text-lg group-hover:scale-110 transition-transform">📊</span>
+        Reportes
+      </a>
+      <div class="my-4 border-t border-sys-dim mx-4"></div>
+
+      <a routerLink="/dashboard"
+         class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-sys-primary hover:bg-sys-primary/10 transition-all border-l-2 border-transparent hover:border-sys-primary mx-2 rounded mb-2">
+        <span class="text-lg">⏱</span>
+        <span>Mi Asistencia</span>
+      </a>
+    </nav>
+
+    <div class="p-4 border-t border-sys-dim bg-black/20">
+      <button (click)="logout()"
+              class="w-full py-2 border border-sys-dim text-xs uppercase tracking-widest text-sys-silver hover:bg-sys-alert hover:text-white hover:border-sys-alert transition-all">
+        Cerrar Sesión
+      </button>
+    </div>
+  </aside>
+
+  <main class="flex-1 overflow-y-auto bg-sys-black relative">
+    <router-outlet></router-outlet>
+  </main>
+
+</div>

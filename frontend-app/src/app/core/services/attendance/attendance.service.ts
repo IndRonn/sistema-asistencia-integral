@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '@env/environment';
-// Importamos los nuevos modelos
+
 import {
   DashboardStatus,
   CheckInResponse,
@@ -43,9 +43,8 @@ export class AttendanceService {
     return this.http.get<HistoryResponse>(`${this.API_URL}/historial`, { params });
   }
 
-  // ✅ NUEVO: Método para enviar la solicitud de justificación
+
   solicitarJustificacion(request: JustificationRequest): Observable<JustificationResponse> {
-    // POST /asistencia/justificaciones
     return this.http.post<JustificationResponse>(`${this.API_URL}/justificaciones`, request);
   }
 }

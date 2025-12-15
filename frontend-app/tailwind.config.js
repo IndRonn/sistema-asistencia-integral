@@ -9,11 +9,11 @@ module.exports = {
         sys: {
           black: '#000000',       // Fondo Absoluto
           surface: '#0A1128',     // Paneles
-          primary: '#06402B',     // Acción (Verde)
-          alert: '#4A0404',       // Error (Vino)
+          primary: '#094f45',     // Acción (Verde)
+          alert: '#810404',       // Error (Vino)
           warning: '#C5A000',     // Advertencia
           silver: '#BCC6CC',      // Texto
-          dim: '#1F2937'          // Deshabilitado
+          dim: '#536379'          // Deshabilitado
         }
       },
       fontFamily: {

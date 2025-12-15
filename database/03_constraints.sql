@@ -1,7 +1,5 @@
-/* ARCHIVO: 02_constraints.sql
-   PROYECTO: Sistema de Control de Asistencias (Slytherin Edition)
-   DESCRIPCIÓN: Definición de Secuencias, Claves Foráneas (FK) e Índices de Rendimiento.
-   AUTOR: The Architect
+/* ARCHIVO: 03_constraints.sql
+   Ronny Mendez
 */
 
 PROMPT === INICIANDO CREACION DE SECUENCIAS ===

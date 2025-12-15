@@ -1,130 +1,110 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
 import { AttendanceService } from '@core/services/attendance/attendance.service';
+import { AuthService } from '@core/services/auth/auth.service';
 import { ToastService } from '@shared/components/ui-toast/toast.service';
-import { DashboardStatus, UIStateConfig } from '@core/models/attendance.model';
+import { interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private attendanceService = inject(AttendanceService);
+  public authService = inject(AuthService);
   private toast = inject(ToastService);
+  private router = inject(Router);
 
-  // Estados
-  isLoading = signal<boolean>(true);
-  isProcessingMarca = signal<boolean>(false); // Bloqueo de botón
-  statusData = signal<DashboardStatus | null>(null);
+  // Reloj
+  currentTime = signal<string>('');
+  currentDate = signal<Date>(new Date()); // ✅ Señal para la fecha
+  private clockSubscription!: Subscription;
 
-  // Timer en vivo
-  liveTime = signal<string>('--:--:--');
-  private timerInterval: any;
+  // Estado de Asistencia
+  statusData = this.attendanceService.currentStatus;
+  isProcessingMarca = signal<boolean>(false);
 
-  // Lógica de Diseño Computada
-  uiState = computed<UIStateConfig>(() => {
-    const estado = this.statusData()?.estado;
-    switch (estado) {
+  // Lógica UI del Botón (Igual que antes)
+  uiState = computed(() => {
+    const status = this.statusData();
+    if (!status) return {
+      label: 'CARGANDO...',
+      actionLabel: 'ESPERE',
+      color: 'border-gray-500 text-gray-500',
+      disabled: true
+    };
+
+    switch (status.estado) {
+      case 'SIN_MARCAR':
+        return {
+          label: 'JORNADA PENDIENTE',
+          actionLabel: 'INICIAR JORNADA',
+          color: 'border-sys-primary text-sys-primary hover:bg-sys-primary hover:text-sys-black',
+          disabled: false
+        };
       case 'EN_JORNADA':
         return {
-          color: 'text-sys-primary', borderColor: 'border-sys-primary',
-          label: 'EN CURSO', actionLabel: 'TERMINAR JORNADA'
+          label: 'EN CURSO',
+          actionLabel: 'TERMINAR JORNADA',
+          color: 'border-sys-warning text-sys-warning hover:bg-sys-warning hover:text-sys-black',
+          disabled: false
         };
       case 'FINALIZADO':
         return {
-          color: 'text-blue-500', borderColor: 'border-blue-500',
-          label: 'FINALIZADO', actionLabel: 'JORNADA CERRADA'
+          label: 'JORNADA COMPLETADA',
+          actionLabel: 'HASTA MAÑANA',
+          color: 'border-sys-dim text-sys-dim',
+          disabled: true
         };
       default:
-        return {
-          color: 'text-sys-silver', borderColor: 'border-sys-dim',
-          label: 'PENDIENTE', actionLabel: 'INICIAR JORNADA'
-        };
+        return { label: 'ERROR', actionLabel: 'ERROR', color: 'border-red-500', disabled: true };
     }
   });
 
-  ngOnInit(): void {
-    this.loadStatus();
+  ngOnInit() {
+    this.startClock();
+    this.attendanceService.getDashboardStatus().subscribe();
   }
 
-  ngOnDestroy(): void {
-    this.stopTimer();
+  ngOnDestroy() {
+    if (this.clockSubscription) this.clockSubscription.unsubscribe();
   }
 
-  loadStatus() {
-    this.isLoading.set(true);
-    this.attendanceService.getDashboardStatus().subscribe({
-      next: (data) => {
-        this.statusData.set(data);
-        this.isLoading.set(false);
-
-        // Iniciar cronómetro si está trabajando
-        if (data.estado === 'EN_JORNADA' && data.horaEntrada) {
-          this.startTimer(data.horaEntrada);
-        } else {
-          this.stopTimer();
-          // Mostrar hora estática si no está corriendo el tiempo
-          this.liveTime.set(data.horaEntrada || '--:--:--');
-        }
-      },
-      error: () => this.isLoading.set(false)
-    });
+  startClock() {
+    this.updateTime();
+    this.clockSubscription = interval(1000).subscribe(() => this.updateTime());
   }
 
-  // --- ACCIÓN DE MARCAR ---
+  updateTime() {
+    const now = new Date();
+    this.currentDate.set(now); // Actualizamos fecha
+    this.currentTime.set(now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+  }
+
   onMarcar() {
     if (this.isProcessingMarca()) return;
-
     this.isProcessingMarca.set(true);
 
     this.attendanceService.marcar().subscribe({
       next: (res) => {
-        // 1. Feedback Exitoso
         this.toast.show(res.mensaje, 'success');
-
-        // 2. Recargar estado para sincronizar vista
-        this.loadStatus();
-
+        this.attendanceService.getDashboardStatus().subscribe();
         this.isProcessingMarca.set(false);
       },
       error: (err) => {
-        // 3. Manejo de Error (409 Conflict)
-        const msg = err.error?.message || 'Error al procesar la marca';
+        const msg = err.error?.message || 'Error al marcar asistencia';
         this.toast.show(msg, 'error');
         this.isProcessingMarca.set(false);
       }
     });
   }
 
-  // --- LÓGICA DEL RELOJ ---
-  private startTimer(horaEntradaStr: string) {
-    this.stopTimer();
-
-    // Crear fecha de referencia (Hoy + horaEntrada)
-    const [h, m, s] = horaEntradaStr.split(':').map(Number);
-    const entrada = new Date();
-    entrada.setHours(h, m, s);
-
-    const update = () => {
-      const ahora = new Date();
-      const diff = Math.abs(ahora.getTime() - entrada.getTime());
-
-      const seconds = Math.floor((diff / 1000) % 60);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      this.liveTime.set(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
-    };
-
-    update();
-    this.timerInterval = setInterval(update, 1000);
-  }
-
-  private stopTimer() {
-    if (this.timerInterval) clearInterval(this.timerInterval);
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

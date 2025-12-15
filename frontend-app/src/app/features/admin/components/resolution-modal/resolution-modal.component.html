@@ -1,0 +1,42 @@
+<div *ngIf="isOpen()"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+
+  <div class="w-full max-w-md bg-sys-surface border shadow-2xl transition-all scale-100"
+       [ngClass]="currentAction() === 'APROBADO' ? 'border-sys-primary' : 'border-sys-alert'">
+
+    <div class="h-2 w-full"
+         [ngClass]="currentAction() === 'APROBADO' ? 'bg-sys-primary' : 'bg-sys-alert'">
+    </div>
+
+    <div class="p-6">
+      <h2 class="text-xl font-serif text-white mb-2 flex items-center gap-2">
+        <span *ngIf="currentAction() === 'APROBADO'">✅ Aprobar Solicitud</span>
+        <span *ngIf="currentAction() === 'RECHAZADO'">🚫 Rechazar Solicitud</span>
+      </h2>
+
+      <p class="text-xs text-gray-400 mb-6">
+        Esta acción es irreversible y actualizará el historial del empleado.
+      </p>
+
+      <label class="block text-xs uppercase text-gray-500 mb-2">Comentario / Resolución</label>
+      <textarea [(ngModel)]="comentario" rows="3"
+                class="w-full bg-sys-black border border-sys-dim text-white p-3 focus:outline-none focus:border-white transition-all resize-none"
+                placeholder="Escribe el motivo de la decisión..."></textarea>
+
+      <div class="flex justify-end gap-3 mt-6">
+        <button (click)="close()" class="px-4 py-2 text-xs uppercase font-bold text-gray-500 hover:text-white">
+          Cancelar
+        </button>
+
+        <button (click)="submit()"
+                [disabled]="isSubmitting()"
+                class="px-6 py-2 text-xs uppercase font-bold text-white transition-all flex items-center gap-2"
+                [ngClass]="currentAction() === 'APROBADO' ? 'bg-sys-primary hover:bg-green-800' : 'bg-sys-alert hover:bg-red-900'">
+          <span *ngIf="isSubmitting()" class="animate-pulse">Procesando...</span>
+          <span *ngIf="!isSubmitting()">Confirmar</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

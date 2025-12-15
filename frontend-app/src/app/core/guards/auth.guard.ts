@@ -12,7 +12,6 @@ export const authGuard: CanActivateFn = (route, state) => {
   }
 
   // 2. Si no, redirigir al Login
-  // Opción Slytherin: Sin mensajes, solo redirección fría.
   router.navigate(['/auth/login']);
   return false;
 };

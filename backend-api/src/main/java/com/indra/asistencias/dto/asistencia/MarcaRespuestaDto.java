@@ -7,8 +7,8 @@ import java.io.Serializable;
 @Data
 @Builder
 public class MarcaRespuestaDto implements Serializable {
-    private String mensaje;          // "Entrada registrada con éxito"
-    private String tipoMarca;        // "ENTRADA" | "SALIDA"
-    private String horaExacta;       // "08:05:00"
-    private String estadoAsistencia; // "P" (Puntual) | "T" (Tarde)
+    private String mensaje;
+    private String tipoMarca;
+    private String horaExacta;
+    private String estadoAsistencia;
 }

@@ -20,7 +20,7 @@ public class UserDetailsImpl implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
     private boolean enabled;
 
-    // Métodos obligatorios de la interfaz UserDetails
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { return authorities; }
     @Override

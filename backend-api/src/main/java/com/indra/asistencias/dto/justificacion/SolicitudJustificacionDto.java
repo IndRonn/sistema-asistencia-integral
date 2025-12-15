@@ -9,15 +9,15 @@ import java.time.LocalDate;
 @Data
 public class SolicitudJustificacionDto implements Serializable {
 
-    private Long idAsistencia; // Puede ser NULL (si es falta total)
+    private Long idAsistencia;
 
     @NotNull(message = "La fecha es obligatoria")
-    private LocalDate fecha;   // La fecha que se quiere justificar
+    private LocalDate fecha;
 
     @NotNull
     @Size(min = 10, max = 255, message = "El motivo debe tener entre 10 y 255 caracteres")
     private String motivo;
 
     @NotNull
-    private String tipo;       // 'SALUD', 'PERSONAL', 'TRABAJO'
+    private String tipo;
 }

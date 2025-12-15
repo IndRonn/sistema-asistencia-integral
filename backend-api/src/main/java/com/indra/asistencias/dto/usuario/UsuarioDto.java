@@ -5,9 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data // Getters, Setters, toString, equals
-@Builder // Patrón Builder para el Mapper
-@NoArgsConstructor // Necesario para Jackson
+@Data
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class UsuarioDto {
     private Long id;

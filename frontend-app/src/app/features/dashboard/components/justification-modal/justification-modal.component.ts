@@ -11,7 +11,7 @@ import { AttendanceRecord } from '@core/models/attendance.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './justification-modal.component.html',
-  styleUrls: [] // Tailwind maneja los estilos
+  styleUrls: [] // Tailwind
 })
 export class JustificationModalComponent {
   private fb = inject(FormBuilder);
@@ -22,12 +22,12 @@ export class JustificationModalComponent {
   isOpen = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
 
-  // Datos del registro seleccionado (Solo lectura para la vista)
+  // Datos del registro seleccionado
   selectedRecord = signal<AttendanceRecord | null>(null);
 
   // Formulario Reactivo
   form: FormGroup = this.fb.group({
-    fecha: [{ value: '', disabled: true }], // Deshabilitado visualmente
+    fecha: [{ value: '', disabled: true }],
     tipo: ['', [Validators.required]],
     motivo: ['', [Validators.required, Validators.minLength(10)]]
   });
@@ -35,10 +35,7 @@ export class JustificationModalComponent {
   // Opciones para el Select
   types: JustificationType[] = ['SALUD', 'PERSONAL', 'TRABAJO'];
 
-  /**
-   * Método público para abrir el modal desde el componente padre.
-   * Recibe el registro de la tabla.
-   */
+
   open(record: AttendanceRecord) {
     this.selectedRecord.set(record);
     this.isOpen.set(true);
@@ -77,14 +74,14 @@ export class JustificationModalComponent {
         this.toast.show(res.mensaje || 'Solicitud enviada correctamente', 'success');
         this.isSubmitting.set(false);
         this.close();
-        // Opcional: Emitir evento para recargar tabla (lo haremos en la integración)
+
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        const code = err.error?.code; // Ej: "JUST-001"
+        const code = err.error?.code;
         const msg = err.error?.message || 'Error al procesar solicitud';
 
-        // Manejo de Errores Inteligente (HU-006 / UX)
+
         if (code === 'JUST-001') {
           this.toast.show('⚠️ Ya existe una solicitud pendiente para esta fecha.', 'warning');
         } else if (code === 'JUST-002') {

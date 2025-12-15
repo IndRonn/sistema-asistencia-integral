@@ -26,11 +26,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        // 1. BUSCAMOS TU ENTIDAD (Datos de Oracle)
+
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-        // 2. CONSTRUIMOS LOS ROLES (Blindaje contra nulos y duplicados)
+
         String rolDb = Optional.ofNullable(usuario.getRol()).orElse("EMPLEADO");
         String rolSpring = rolDb.startsWith("ROLE_") ? rolDb : "ROLE_" + rolDb;
 
@@ -38,15 +38,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 new SimpleGrantedAuthority(rolSpring)
         );
 
-        // 3. CONVERTIMOS ENTIDAD -> USER DETAILS CUSTOM
-        // Esto encaja con el constructor @AllArgsConstructor de UserDetailsImpl
+
         return new UserDetailsImpl(
                 usuario.getIdUsuario(),         // ID
                 usuario.getUsername(),          // Username
                 usuario.getEmail(),             // Email
                 usuario.getPassword(),          // Password Hash
                 authorities,                    // Roles
-                "A".equals(usuario.getEstado()) // Enabled (True si estado es 'A')
+                "A".equals(usuario.getEstado()) // Enabled
         );
     }
 }

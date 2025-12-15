@@ -13,11 +13,9 @@ import java.io.Serializable;
 public class EstadoAsistenciaDto implements Serializable {
     private String estado;
     private String mensaje;
-    private String horaEntrada; // La hora real de la marca
+    private String horaEntrada;
     private String horaSalida;
     private boolean esTardanza;
-
-    // --- NUEVOS CAMPOS ---
-    private String horaInicioConfig; // Ej: "08:00"
-    private String toleranciaMinutos; // Ej: "15"
+    private String horaInicioConfig;
+    private String toleranciaMinutos;
 }

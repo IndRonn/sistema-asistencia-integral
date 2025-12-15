@@ -1,13 +1,10 @@
-/* ARCHIVO: 01_tables.sql
-   PROYECTO: Sistema de Control de Asistencias (Slytherin Edition)
-   DESCRIPCIÓN: Definición estructural de tablas maestras y de auditoría.
-   AUTOR: The Architect
+/* ARCHIVO: 02_tables.sql
+   Ronny Mendez
 */
 
-PROMPT === INICIANDO CREACION DE TABLAS MAESTRAS ===
 
 -- 1. TABLA USUARIO
--- El núcleo de identidad. Restricciones estrictas para evitar usuarios duplicados o roles inválidos.
+
 CREATE TABLE USUARIO (
     id_usuario      NUMBER(10)      NOT NULL,
     username        VARCHAR2(50)    NOT NULL,
@@ -51,23 +48,26 @@ CREATE TABLE ASISTENCIA (
 
 -- 3. TABLA JUSTIFICACION
 -- Gestión de incidencias. Vincula empleados con admin aprobadores.
+
 CREATE TABLE JUSTIFICACION (
     id_justificacion NUMBER(10)     NOT NULL,
-    id_usuario       NUMBER(10)     NOT NULL, -- Empleado solicitante
-    id_asistencia    NUMBER(15),              -- Puede ser NULL si justifica una falta total (sin registro previo)
+    id_usuario       NUMBER(10)     NOT NULL,
+    id_asistencia    NUMBER(15),
     fecha_justificar DATE           NOT NULL,
     motivo           VARCHAR2(500)  NOT NULL,
     tipo             VARCHAR2(20)   NOT NULL,
     estado           VARCHAR2(20)   DEFAULT 'PENDIENTE' NOT NULL,
     fecha_solicitud  TIMESTAMP      DEFAULT SYSDATE NOT NULL,
-    admin_aprobador  NUMBER(10),              -- ID del Admin que resuelve
+    admin_aprobador  NUMBER(10),
     fecha_resolucion TIMESTAMP,
 
     CONSTRAINT PK_JUSTIFICACION PRIMARY KEY (id_justificacion),
 
-    -- Valores permitidos según diccionario de datos
     CONSTRAINT CHK_JUST_TIPO CHECK (tipo IN ('SALUD', 'PERSONAL', 'TRABAJO')),
-    CONSTRAINT CHK_JUST_ESTADO CHECK (estado IN ('PENDIENTE', 'APROBADO', 'RECHAZADO'))
+    CONSTRAINT CHK_JUST_ESTADO CHECK (estado IN ('PENDIENTE', 'APROBADO', 'RECHAZADO')),
+
+    -- VALIDACIÓN DE CONTRATO (HU-006): Mínimo 10 caracteres
+    CONSTRAINT CHK_JUST_MOTIVO_LEN CHECK (LENGTH(motivo) >= 10)
 );
 
 -- 4. TABLA CONFIGURACION
@@ -80,7 +80,6 @@ CREATE TABLE CONFIGURACION (
     CONSTRAINT PK_CONFIGURACION PRIMARY KEY (clave)
 );
 
-PROMPT === INICIANDO CREACION DE TABLAS DE AUDITORIA (THE WATCHERS) ===
 
 -- 5. LOG_ASISTENCIA
 -- Historial inmutable de cambios en asistencias (correcciones manuales, cierres automáticos).
@@ -125,4 +124,3 @@ CREATE TABLE LOG_SEGURIDAD (
     CONSTRAINT PK_LOG_SEG PRIMARY KEY (id_log_seg)
 );
 
-PROMPT === CREACION DE TABLAS COMPLETADA CON EXITO ===
